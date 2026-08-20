@@ -1,0 +1,91 @@
+/cmd - command
+
+
+/help
+    
+/task
+    add <task> <assignee> <deadline>
+        → Create a new task with assignment + deadline (coding or non‑coding).
+    update <task | tid> <field> <value>
+        → Update status, deadline, assignee, or description.
+        Example: /task update 12 status in-progress
+                 /task update "Hardware assembly" deadline 2026-08-30
+    describe <task | tid> <description>
+        → Add or refine the task’s detailed description.
+        Example: /task describe "Write documentation" "Draft API reference section"
+    list
+        → Show all tasks with assignee, deadline, status.
+    remove <task | tid>
+        → Delete a task.
+    notify <task | tid>
+        → Manually trigger a Discord reminder.
+    due <days>
+        → List tasks due within X days.
+    link <task | tid> <issue#>
+        → (Optional) connect a task to a GitHub issue if it’s code‑related.    
+    sync
+        → (Optional) sync tasks with GitHub issues.
+
+
+/schedule - Automation
+    set <name> <when> - can also just update when
+    lists // list schedule
+    history
+
+/logs <name> <lines, def=n>
+/errors <name> <lines, def=n>
+/logs list
+
+/ask <question>
+/ask model list → show available models.
+/ask config → show current provider + model.
+/ask switch <model> → change model (admin only).
+
+/note
+    add <title>
+    lists
+    search <keyword>
+    remove <title>
+    push <sentence>
+    push '<sentence>\n<sentence>'
+    pop
+    export <title>
+
+/deploy
+    start <service>
+    stop <service>
+    restart <service>
+    status <service>
+    rollback <commit | version>
+    simulate
+    production=<branch>
+    staging=<branch>
+
+
+/status
+    disks
+    resources
+    network
+
+requirements:
+    test.js -- test the functionality
+    setup.js -- build the .env
+        must be allowed to be stored as scedule/daemon service
+
+    .env -- where the credentials are stored
+        SETTINGS_KEY
+        SETTINGS_PATH
+        DISCORD_TOKEN
+        CLIENT_ID
+        GUILD_ID
+        AI_PROVIDER
+        AI_TOKEN
+        AI_MODEL
+
+
+    : must logged thru discord the error
+    : setup.js must determine what are the command it can run
+    : sanwan logs its own logs
+    : notes, and settings should be encrypted by the key on .env
+    : should be allow to detect the os its running on, so it can determine when checking disk, resources, etc. and also how to manage services. 
+    : make it also easily to setup to github webhook.

@@ -1,0 +1,63 @@
+{
+  "_comment": "Example schema for the deployServices registry (stored encrypted in data/registry.enc).",
+  "_note": "Commands are shell strings executed by the /deploy command via child_process. Adjust for your OS and process manager.",
+  "_note2": "production and staging branch mappings apply to rollback and simulate.",
+  "deployServices": [
+    {
+      "id": "api",
+      "name": "api",
+      "description": "Main REST API server (PM2)",
+      "startCmd":   "pm2 start api --name api",
+      "stopCmd":    "pm2 stop api",
+      "restartCmd": "pm2 restart api",
+      "statusCmd":  "pm2 status api",
+      "rollbackCmd": "git -C /srv/api checkout {version} && pm2 restart api",
+      "simulateCmd": "pm2 describe api",
+      "production": "main",
+      "staging":    "develop",
+      "enabled": true
+    },
+    {
+      "id": "worker",
+      "name": "worker",
+      "description": "Background job worker (PM2)",
+      "startCmd":   "pm2 start worker --name worker",
+      "stopCmd":    "pm2 stop worker",
+      "restartCmd": "pm2 restart worker",
+      "statusCmd":  "pm2 status worker",
+      "rollbackCmd": "git -C /srv/worker checkout {version} && pm2 restart worker",
+      "simulateCmd": "pm2 describe worker",
+      "production": "main",
+      "staging":    "develop",
+      "enabled": true
+    },
+    {
+      "id": "nginx",
+      "name": "nginx",
+      "description": "Nginx web server (systemctl — Linux only)",
+      "startCmd":   "sudo systemctl start nginx",
+      "stopCmd":    "sudo systemctl stop nginx",
+      "restartCmd": "sudo systemctl restart nginx",
+      "statusCmd":  "sudo systemctl status nginx",
+      "rollbackCmd": null,
+      "simulateCmd": "nginx -t",
+      "production": null,
+      "staging":    null,
+      "enabled": true
+    },
+    {
+      "id": "frontend",
+      "name": "frontend",
+      "description": "Static frontend (serve via npx serve)",
+      "startCmd":   "npx serve -s /srv/frontend/dist -p 5000 &",
+      "stopCmd":    "pkill -f 'serve.*5000'",
+      "restartCmd": "pkill -f 'serve.*5000' && npx serve -s /srv/frontend/dist -p 5000 &",
+      "statusCmd":  "pgrep -a -f 'serve.*5000'",
+      "rollbackCmd": "git -C /srv/frontend checkout {version} && npm run build",
+      "simulateCmd": "echo 'Build OK'",
+      "production": "main",
+      "staging":    "preview",
+      "enabled": false
+    }
+  ]
+}

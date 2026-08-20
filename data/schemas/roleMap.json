@@ -1,0 +1,55 @@
+{
+  "_comment": "Example schema for role-based permissions (stored encrypted inside data/settings.enc under permissions.roleMap).",
+  "_note": "requiredRoles contains Discord Role ID strings. Empty array = all members allowed.",
+  "_note2": "requireAll: false → member needs ANY one of the listed roles. true → member needs ALL.",
+  "roleMap": {
+    "help": {
+      "requiredRoles": [],
+      "requireAll": false,
+      "description": "Always allowed — no role restriction",
+      "enabled": true
+    },
+    "task": {
+      "requiredRoles": [],
+      "requireAll": false,
+      "description": "All members may manage tasks",
+      "enabled": true
+    },
+    "note": {
+      "requiredRoles": [],
+      "requireAll": false,
+      "description": "All members may manage notes",
+      "enabled": true
+    },
+    "schedule": {
+      "requiredRoles": ["1234567890123456789"],
+      "requireAll": false,
+      "description": "Moderators and above can manage schedules",
+      "enabled": true
+    },
+    "deploy": {
+      "requiredRoles": ["9876543210987654321", "1122334455667788990"],
+      "requireAll": false,
+      "description": "Admin or DevOps role required",
+      "enabled": true
+    },
+    "status": {
+      "requiredRoles": ["1234567890123456789"],
+      "requireAll": false,
+      "description": "Moderators and above can view system status",
+      "enabled": true
+    },
+    "ask": {
+      "requiredRoles": [],
+      "requireAll": false,
+      "description": "All members may ask AI questions",
+      "enabled": true
+    },
+    "logs": {
+      "requiredRoles": ["1234567890123456789"],
+      "requireAll": false,
+      "description": "Moderators and above can view logs",
+      "enabled": true
+    }
+  }
+}

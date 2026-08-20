@@ -1,0 +1,55 @@
+{
+  "_comment": "Example schema for the logSources registry (stored encrypted in data/registry.enc).",
+  "_note": "path may be an absolute file path OR a named log key (e.g. 'bot', 'errors') for internal Sanwan logs.",
+  "_note2": "type: 'file' = read from filesystem path. 'internal' = read from Sanwan's own data/logs/ directory.",
+  "logSources": [
+    {
+      "id": "bot",
+      "name": "bot",
+      "path": "bot.log",
+      "type": "internal",
+      "description": "Sanwan bot activity log",
+      "enabled": true
+    },
+    {
+      "id": "errors",
+      "name": "errors",
+      "path": "errors.log",
+      "type": "internal",
+      "description": "Sanwan error log",
+      "enabled": true
+    },
+    {
+      "id": "commands",
+      "name": "commands",
+      "path": "commands.log",
+      "type": "internal",
+      "description": "Sanwan command execution log",
+      "enabled": true
+    },
+    {
+      "id": "nginx",
+      "name": "nginx",
+      "path": "/var/log/nginx/access.log",
+      "type": "file",
+      "description": "Nginx web-server access log",
+      "enabled": true
+    },
+    {
+      "id": "service1",
+      "name": "service1",
+      "path": "/var/log/myapp/service1.log",
+      "type": "file",
+      "description": "Custom application service log",
+      "enabled": true
+    },
+    {
+      "id": "service2",
+      "name": "service2",
+      "path": "/var/log/myapp/service2.log",
+      "type": "file",
+      "description": "Secondary application service log",
+      "enabled": false
+    }
+  ]
+}

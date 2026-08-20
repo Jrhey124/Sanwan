@@ -1,0 +1,48 @@
+[2026-08-20T15:26:05.046Z] [INFO] Initialized encrypted "data/settings.enc" with default data
+[2026-08-20T15:26:05.072Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-20T15:26:05.076Z] [INFO] Initialized "tasks/tasks.json" with default data
+[2026-08-20T15:26:05.079Z] [INFO] Initialized "schedules/schedules.json" with default data
+[2026-08-20T15:26:05.082Z] [INFO] Initialized "daemon-config.json" with default data
+[2026-08-20T16:52:53.738Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T16:55:55.736Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T16:57:33.732Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T16:57:36.153Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:04:35.986Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:35:54.567Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:35:54.573Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:36:36.221Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:36:41.841Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:43:42.718Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:43:42.723Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:45:11.765Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:45:14.262Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:46:42.301Z] [ERROR] storage.encryptedRead failed for "data/settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:52:58.303Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:52:58.306Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T17:53:32.326Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-20T18:05:36.118Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:05:36.122Z] [ERROR] storage.encryptedRead failed for "registry.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:06:49.989Z] [ERROR] storage.encryptedRead failed for "settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:07:06.923Z] [ERROR] storage.encryptedRead failed for "settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:07:32.582Z] [ERROR] storage.encryptedRead failed for "settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:07:32.929Z] [INFO] Initialized "notes/notes.json" with default data
+[2026-08-20T18:07:32.969Z] [ERROR] storage.encryptedRead failed for "settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:07:32.980Z] [ERROR] storage.encryptedRead failed for "settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:07:32.981Z] [ERROR] storage.encryptedRead failed for "settings.enc" {"error":"Unsupported state or unable to authenticate data"}
+[2026-08-20T18:12:43.060Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-20T18:12:43.068Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-20T18:12:43.070Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-20T18:13:22.460Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-20T18:13:22.463Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-20T18:14:45.950Z] [INFO] Loaded command: /disk
+[2026-08-20T18:14:45.957Z] [INFO] Loaded command: /help
+[2026-08-20T18:14:45.961Z] [INFO] Loaded command: /logs
+[2026-08-20T18:14:45.975Z] [INFO] Loaded command: /note
+[2026-08-20T18:14:45.977Z] [INFO] Loaded command: /resources
+[2026-08-20T18:14:45.981Z] [INFO] Loaded command: /schedule
+[2026-08-20T18:14:45.985Z] [INFO] Loaded command: /task
+[2026-08-20T18:14:47.612Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-20T18:14:47.613Z] [INFO] Allowed commands: help, disks, resources, network
+[2026-08-20T18:14:47.621Z] [INFO] GitHub webhook server started {"port":3000,"path":"/webhook"}
+[2026-08-20T18:15:22.277Z] [COMMAND] Command: /help by reiduckk - SUCCESS
+[2026-08-20T18:17:00.918Z] [WARN] Gate A blocked: /note {"user":"reiduckk"}

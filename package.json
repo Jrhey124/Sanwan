@@ -1,6 +1,26 @@
 {
+  "name": "sanwan-bot",
+  "version": "1.0.0",
+  "description": "Discord ChatOps bot — task management, scheduling, and DevOps automation",
+  "main": "sanwan.js",
+  "scripts": {
+    "start":    "node sanwan.js",
+    "setup":    "node setup.js",
+    "test":     "node test.js",
+    "deploy":   "node deploy-commands.js",
+    "daemon":   "node daemon.js",
+    "webhook":  "node webhook-server.js"
+  },
+  "keywords": ["discord", "bot", "chatops", "devops", "automation"],
+  "author":   "",
+  "license":  "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "discord.js": "^14.27.0",
-    "dotenv": "^17.4.2"
-  }
+    "dotenv":     "^17.4.2",
+    "cron":       "^3.1.7"
+  },
+  "devDependencies": {}
 }

@@ -1,0 +1,54 @@
+{
+  "_comment": "Example schema for the allowedCommands registry (stored encrypted in data/registry.enc).",
+  "_note": "This file is documentation only. The real data is AES-256-GCM encrypted.",
+  "allowedCommands": [
+    {
+      "id": "help",
+      "name": "help",
+      "description": "Show available commands — always permitted",
+      "enabled": true
+    },
+    {
+      "id": "task",
+      "name": "task",
+      "description": "Create and manage tasks",
+      "enabled": true
+    },
+    {
+      "id": "note",
+      "name": "note",
+      "description": "Personal note management",
+      "enabled": true
+    },
+    {
+      "id": "schedule",
+      "name": "schedule",
+      "description": "Manage cron-based schedules",
+      "enabled": true
+    },
+    {
+      "id": "ask",
+      "name": "ask",
+      "description": "Ask the configured AI model a question",
+      "enabled": true
+    },
+    {
+      "id": "logs",
+      "name": "logs",
+      "description": "View log file contents",
+      "enabled": true
+    },
+    {
+      "id": "deploy",
+      "name": "deploy",
+      "description": "Start / stop / restart services — admin only",
+      "enabled": true
+    },
+    {
+      "id": "status",
+      "name": "status",
+      "description": "Show disk, resource, and network status",
+      "enabled": false
+    }
+  ]
+}
