@@ -46,17 +46,23 @@ const STATIC_CATALOGUE = {
   },
   task: {
     icon:        '📋',
-    description: 'Create and manage tasks with assignees and deadlines',
+    description: 'Create and manage tasks with assignees, deadlines, priority, and delegation',
     subcommands: [
-      '`add <title> [assignee] [deadline]`   — create a task',
-      '`list [filter]`                        — show all tasks',
-      '`update <tid> <field> <value>`         — change a field',
-      '`describe <tid> <description>`         — set description',
-      '`remove <tid>`                         — delete a task',
-      '`notify <tid>`                         — send a reminder',
-      '`due <days>`                           — tasks due in N days',
-      '`link <tid> <issue#>`                  — link to GitHub issue',
-      '`sync`                                 — sync with issue tracker'
+      '`create <title> [description] [priority]`            — create a new task',
+      '`update <title | tid> [title] [desc] [priority]`     — edit task info',
+      '`delete <title | tid>`                               — delete a task permanently',
+      '`list [open | ongoing | completed | closed]`         — list tasks, filter by status',
+      '',
+      '`delegate <title | tid> <assignees> <deadline>`      — assign people + set deadline → Ongoing',
+      '`undelegate <title | tid> [assignees] [deadline]`    — remove assignees / clear deadline',
+      '',
+      '`status <title | tid> <open|ongoing|completed|closed>` — update task status',
+      '`settings <title | tid> [notifyOnAssignment] [notifyNearDeadline]` — notification config',
+      '`link <title | tid> <issue#>`                        — link to GitHub issue',
+      '`sync`                                               — sync with issue tracker',
+      '',
+      '**Deadline formats:** `fri`, `mon`, `tomorrow`, `3d`, `2w`, `1mo`, `2026-09-01`, `2026-09-01 14:30`',
+      '**IDs:** t0, t1, t2, … (lowercase, zero-based)  |  **Priority:** low medium high critical'
     ]
   },
   schedule: {

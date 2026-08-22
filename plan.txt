@@ -1,5 +1,9 @@
-/cmd - command
 
+
+
+- run setup defined commands, also optional param if confgiured on setup.js
+/cmd - command
+    /cmd <command> {param1} {param2}
 
 /help
     
@@ -27,11 +31,12 @@
         → (Optional) sync tasks with GitHub issues.
 
 
-/schedule - Automation
+/schedule - Automate setup defined services
     set <name> <when> - can also just update when
     lists // list schedule
     history
 
+- management of services pipelined logs
 /logs <name> <lines, def=n>
 /errors <name> <lines, def=n>
 /logs list

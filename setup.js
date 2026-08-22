@@ -11,7 +11,7 @@
  *  4.  Discover available /cmd command files
  *  5.  Allowed-commands registry  (add / remove / update per record)
  *  5b. Role-based permissions     (per-command Discord role mapping)
- *  6.  Discord error-log channel
+ *  6.  Discord notification channels (error, task, github)
  *  7.  Log-sources registry       (add / remove / update per record)
  *  7b. Deploy-services registry   (add / remove / update per record)
  *  8.  GitHub webhook instructions
@@ -142,11 +142,40 @@ async function step0EnvGuard() {
 
   const choice = await ask(
     '  What would you like to do?\n' +
-    '    [1] Update — keep existing values, prompt only for missing/changed ones\n' +
+    '    [1] Update   — keep existing values, prompt only for missing/changed ones\n' +
     '    [2] Overwrite — re-enter every value from scratch\n' +
-    '    [3] Skip — keep .env as-is and continue to other setup steps\n' +
+    '    [3] Skip     — keep .env as-is and continue to other setup steps\n' +
+    '    [4] View     — display current configuration (secrets redacted)\n' +
     '  Choice [1]: '
   );
+
+  if (choice === '4') {
+    print('\n  Current .env configuration:', 'cyan');
+    const SECRET_KEYS = new Set([
+      'DISCORD_TOKEN', 'SETTINGS_KEY', 'AI_TOKEN',
+      'GITHUB_PAT', 'GITHUB_WEBHOOK_SECRET'
+    ]);
+    const redact = (key, val) => {
+      if (!val) return '(not set)';
+      if (SECRET_KEYS.has(key)) {
+        return val.length > 4 ? '*'.repeat(val.length - 4) + val.slice(-4) : '****';
+      }
+      return val;
+    };
+    Object.entries(existing).forEach(([k, v]) => {
+      print('    ' + k.padEnd(28) + ' ' + redact(k, v), v ? 'reset' : 'dim');
+    });
+    print('');
+    const next = await ask(
+      '  Choose action:\n' +
+      '    [1] Update  [2] Overwrite  [3] Skip\n' +
+      '  Choice [1]: '
+    );
+    if (next === '2') { print('  Will overwrite .env from scratch.', 'yellow'); return 'overwrite'; }
+    if (next === '3') { print('  Keeping .env unchanged.', 'green'); Object.assign(process.env, existing); return 'skip'; }
+    print('  Will update .env — press Enter to keep current value.', 'yellow');
+    return 'update';
+  }
 
   if (choice === '2') {
     print('  ✓ Will overwrite .env from scratch.', 'yellow');
@@ -154,11 +183,9 @@ async function step0EnvGuard() {
   }
   if (choice === '3') {
     print('  ✓ Keeping .env unchanged.', 'green');
-    // Still reload into process.env so subsequent steps see the values
     Object.assign(process.env, existing);
     return 'skip';
   }
-  // Default: update
   print('  ✓ Will update .env — press Enter on any prompt to keep current value.', 'yellow');
   return 'update';
 }
@@ -814,40 +841,74 @@ async function step5bRolePermissions(commands) {
   print('\n  ✓ Role permissions saved.', 'green');
 }
 
-// ─── Step 6 — Discord error-log channel ──────────────────────────────────────
+// ─── Step 6 — Discord Notification Channels ─────────────────────────────────
+//
+// Three dedicated channels stored encrypted in settings.enc:
+//   errorChannel   — bot errors and warnings
+//   taskChannel    — task delegation and deadline reminders
+//   githubChannel  — GitHub event feed (push, PR, workflow, release)
+//
+// How to find a channel ID: right-click a Discord channel → Copy Channel ID
+// (requires Discord Settings → Advanced → Developer Mode)
 
-async function step6ErrorLog() {
-  section('Step 6 — Discord Error-Log Channel');
+async function step6DiscordChannels() {
+  section('Step 6 — Discord Notification Channels');
 
-  hint('Errors will be posted to this Discord channel as embeds.');
+  hint('Channel IDs are stored encrypted in settings.enc.');
+  hint('How to find: right-click a Discord channel → Copy Channel ID');
+  hint('(Requires Developer Mode: Discord Settings → Advanced → Developer Mode)');
+  hint('Leave blank to keep current, type "none" to clear.');
 
   const storage = require('./utils/storage');
   const file    = settingsStorageKey();
 
-  let current = null;
+  let currentError  = null;
+  let currentTask   = null;
+  let currentGithub = null;
+
   if (process.env.SETTINGS_KEY) {
     try {
-      const s = storage.encryptedRead(file, {});
-      current = s?.bot?.errorChannel || null;
+      const s       = storage.encryptedRead(file, {});
+      currentError  = s?.bot?.errorChannel  || null;
+      currentTask   = s?.bot?.taskChannel   || null;
+      currentGithub = s?.bot?.githubChannel || null;
     } catch { /* file may not exist yet */ }
   }
 
-  if (current) print(`  Current channel: ${current}`, 'dim');
-
-  const setup = await confirm('  Configure an error-log channel?', false);
-  if (!setup) {
-    print('  Skipped.', 'yellow');
-    return { errorChannelId: current };
+  async function askChannel(label, hint_text, current) {
+    print('\n  ' + label + (current ? ' (current: ' + current + ')' : ''), 'cyan');
+    hint(hint_text);
+    const input = await ask('  Channel ID (blank=keep, "none"=clear): ');
+    if (input.toLowerCase() === 'none') return null;
+    if (input === '') return current;
+    return input;
   }
 
-  const channelId = await ask('  Paste the Discord Channel ID: ');
-  if (!channelId) {
-    print('  No ID entered — kept unchanged.', 'yellow');
-    return { errorChannelId: current };
-  }
+  // Error-log channel
+  const setupError = await confirm('\n  Configure an error-log channel?', !!currentError);
+  const errorChannelId = setupError
+    ? await askChannel('Error-Log Channel', 'Bot errors and warnings are posted here.', currentError)
+    : currentError;
+  if (errorChannelId) print('  ✓ Error channel: ' + errorChannelId, 'green');
+  else print('  · Error channel: not configured', 'dim');
 
-  print(`  ✓ Error channel set to ${channelId}`, 'green');
-  return { errorChannelId: channelId };
+  // Task notification channel
+  const setupTask = await confirm('\n  Configure a task notification channel?', !!currentTask);
+  const taskChannelId = setupTask
+    ? await askChannel('Task Notification Channel', 'Task delegation, status changes, deadline reminders.', currentTask)
+    : currentTask;
+  if (taskChannelId) print('  ✓ Task channel: ' + taskChannelId, 'green');
+  else print('  · Task channel: not configured', 'dim');
+
+  // GitHub events channel
+  const setupGithub = await confirm('\n  Configure a GitHub events channel?', !!currentGithub);
+  const githubChannelId = setupGithub
+    ? await askChannel('GitHub Events Channel', 'Push events, PRs, workflow results, and releases.', currentGithub)
+    : currentGithub;
+  if (githubChannelId) print('  ✓ GitHub channel: ' + githubChannelId, 'green');
+  else print('  · GitHub channel: not configured', 'dim');
+
+  return { errorChannelId, taskChannelId, githubChannelId };
 }
 
 // ─── Step 7 — Log-sources registry ───────────────────────────────────────────
@@ -1144,7 +1205,7 @@ function step10EncryptedFiles() {
   const file    = settingsStorageKey();
 
   storage.initializeEncryptedIfMissing(file, {
-    bot: { name: 'Sanwan', version: '1.0.0', errorChannel: null, allowedCommands: [] },
+    bot: { name: 'Sanwan', version: '1.0.0', errorChannel: null, taskChannel: null, githubChannel: null, allowedCommands: [] },
     permissions: { roleMap: {} },
     deploy:        { production: 'main', staging: 'develop' },
     notifications: { taskReminders: true, scheduleNotifications: true, githubPushNotifications: true },
@@ -1193,7 +1254,7 @@ function step12LogFiles() {
 
 // ─── Step 13 — Persist collected settings ────────────────────────────────────
 
-function step13PersistSettings({ errorChannelId }) {
+function step13PersistSettings({ errorChannelId, taskChannelId, githubChannelId }) {
   section('Step 13 — Persisting Configuration');
 
   if (!process.env.SETTINGS_KEY) {
@@ -1207,7 +1268,9 @@ function step13PersistSettings({ errorChannelId }) {
   try {
     const settings = storage.encryptedRead(file, { bot: {}, permissions: {}, github: {}, deploy: {}, notifications: {} });
 
-    if (errorChannelId) settings.bot.errorChannel = errorChannelId;
+    if (errorChannelId  !== undefined) settings.bot.errorChannel  = errorChannelId;
+    if (taskChannelId   !== undefined) settings.bot.taskChannel   = taskChannelId;
+    if (githubChannelId !== undefined) settings.bot.githubChannel = githubChannelId;
 
     // Mirror allowed-commands list into settings for sanwan.js backward compat
     const registry = require('./utils/registry');
@@ -1338,8 +1401,8 @@ async function main() {
     // 5b. Role permissions
     await step5bRolePermissions(commands);
 
-    // 6. Error-log channel
-    const { errorChannelId } = await step6ErrorLog();
+    // 6. Discord notification channels
+    const { errorChannelId, taskChannelId, githubChannelId } = await step6DiscordChannels();
 
     // 7. Log sources
     await step7LogSources();
@@ -1359,7 +1422,7 @@ async function main() {
     step12LogFiles();
 
     // 13. Persist
-    step13PersistSettings({ errorChannelId });
+    step13PersistSettings({ errorChannelId, taskChannelId, githubChannelId });
 
     // 14. Done
     step14NextSteps();

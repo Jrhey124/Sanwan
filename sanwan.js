@@ -233,12 +233,15 @@ function _startPoller(settingsFile) {
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
-/** Read the notify channel from encrypted settings (best-effort). */
-function _loadNotifyChannel(settingsFile) {
+/**
+ * Read a specific notification channel ID from encrypted settings.
+ * channelKey: 'errorChannel' | 'taskChannel' | 'githubChannel'
+ */
+function _loadNotifyChannel(settingsFile, channelKey = 'errorChannel') {
   if (!process.env.SETTINGS_KEY) return null;
   try {
     const settings = storage.encryptedRead(settingsFile, null);
-    return settings?.bot?.errorChannel ?? null;
+    return settings?.bot?.[channelKey] ?? null;
   } catch {
     return null;
   }

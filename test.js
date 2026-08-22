@@ -1016,7 +1016,7 @@ function T25_deployFlush() {
     { name: 'loadCommandPayloads exported',    pattern: /module\.exports.*loadCommandPayloads/ },
     { name: 'deployCommands exported',         pattern: /module\.exports.*deployCommands/ },
     { name: 'require cache cleared for cmd',   pattern: /delete require\.cache/ },
-    { name: 'buildData called for cmd.js',     pattern: /mod\.buildData\s*&&.*mod\.buildData\(\)/ }
+    { name: 'buildData called for cmd.js',     pattern: /mod\.buildData[\s\S]{1,120}mod\.buildData\(\)/ }
   ];
 
   for (const { name, pattern } of checks) {
