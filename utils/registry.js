@@ -163,12 +163,27 @@ function listAllowedCommands() {
 
 /**
  * Add a new allowed-command record.
+ * All fields from the caller's record are preserved so that shell-type
+ * entries retain their filepath, params, command, and type values after
+ * the encrypted round-trip through storage.
  *
- * @param {{ id: string, name: string, description?: string, enabled?: boolean }} record
+ * @param {{
+ *   id:           string,
+ *   name:         string,
+ *   description?: string,
+ *   enabled?:     boolean,
+ *   type?:        'bot' | 'shell',
+ *   filepath?:    string,
+ *   params?:      string,
+ *   command?:     string
+ * }} record
  */
 function addAllowedCommand(record) {
   const full = {
-    id:          record.id   || record.name,
+    // Spread all caller-supplied fields first so nothing is dropped
+    ...record,
+    // Then normalise the required fields with safe defaults
+    id:          record.id          || record.name,
     name:        record.name,
     description: record.description ?? '',
     enabled:     record.enabled     ?? true

@@ -6,12 +6,10 @@
  *  1. Load .env
  *  2. Detect OS (informational banner)
  *  3. Load command files from commands/
- *  4. Load permissions (allowed-commands registry + role map) from encrypted files
- *  5. Start Discord client
- *  6. On ready: wire Discord client into logger, start GitHub webhook server
- *  7. Route every interaction through the two-gate permission check:
- *       Gate A — isCommandAllowed()    (owner device-level on/off switch)
- *       Gate B — checkPermission()     (Discord role requirements)
+ *  4. Route interactions through the command queue
+ *       queue.enqueue() handles Gate A (registry) + Gate B (roles) internally
+ *       and ensures one active job per user at a time
+ *  5. On ready: wire logger, start GitHub integration (webhook OR polling)
  */
 
 'use strict';
@@ -22,18 +20,21 @@ const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs   = require('fs');
 const path = require('path');
 
-const logger      = require('./utils/logger');
-const storage     = require('./utils/storage');
-const permissions = require('./utils/permissions');
-const registry    = require('./utils/registry');
-const { detectPlatform } = require('./utils/os-service');
-const { createWebhook  } = require('./utils/github-webhook');
+const logger          = require('./utils/logger');
+const storage         = require('./utils/storage');
+const permissions     = require('./utils/permissions');
+const registry        = require('./utils/registry');
+const queue           = require('./utils/queue');
+const { detectPlatform }  = require('./utils/os-service');
+const { createWebhook }   = require('./utils/github-webhook');
+const { startPolling }    = require('./utils/github-poller');
 
 // ─── 1. OS banner ─────────────────────────────────────────────────────────────
 
 const platform = detectPlatform();
 console.log(`\n🖥  Platform : ${platform.name} (${platform.arch})`);
 console.log(`⚙️  Services : ${platform.serviceManager}`);
+console.log(`🐙  GitHub   : ${process.env.GITHUB_MODE || 'none'}`);
 
 // ─── 2. Discord client ────────────────────────────────────────────────────────
 
@@ -62,67 +63,28 @@ if (!fs.existsSync(commandsDir)) {
   }
 }
 
-// ─── 4. Interaction router ────────────────────────────────────────────────────
+// ─── 4. Interaction router — all dispatch goes through the queue ───────────────
+//
+// queue.enqueue() runs:
+//   Gate A — registry.isCommandAllowed()     (owner device-level on/off)
+//   Gate B — permissions.checkPermission()   (Discord role requirements)
+// before placing the job in the user's per-user FIFO queue.
+// No duplicate gate logic lives here.
 
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  const { commandName } = interaction;
-
-  // ── Gate A — owner-level allow/deny (registry) ───────────────────────────
-  if (!registry.isCommandAllowed(commandName)) {
-    logger.warn(`Gate A blocked: /${commandName}`, { user: interaction.user.tag });
-    await interaction.reply({
-      content: `⛔ \`/${commandName}\` is not enabled on this device.`,
-      ephemeral: true
-    });
-    return;
-  }
-
-  // ── Gate B — role-based permission (permissions.checkPermission) ─────────
-  // interaction.member is available in guild interactions; falls back to []
-  const memberRoleIds = interaction.member
-    ? [...interaction.member.roles.cache.keys()]
-    : [];
-
-  const { allowed, reason } = permissions.checkPermission(commandName, memberRoleIds);
-
-  if (!allowed) {
-    logger.warn(`Gate B blocked: /${commandName} — ${reason}`, { user: interaction.user.tag });
-    await interaction.reply({
-      content: `🔒 You don't have permission to run \`/${commandName}\`.\n> ${reason}`,
-      ephemeral: true
-    });
-    return;
-  }
-
-  // ── Dispatch ──────────────────────────────────────────────────────────────
-  const command = client.commands.get(commandName);
+  const command = client.commands.get(interaction.commandName);
 
   if (!command) {
+    // Unknown command — not in loaded set (can happen if deploy-commands ran
+    // before the command file was created).
     await interaction.reply({ content: '❓ Unknown command.', ephemeral: true });
     return;
   }
 
-  try {
-    await command.run(interaction);
-    logger.command(commandName, interaction.user.tag, true);
-  } catch (err) {
-    logger.error(`Command /${commandName} threw an error`, {
-      user:  interaction.user.tag,
-      error: err.message
-    });
-
-    const msg = {
-      content:   `❌ Something went wrong running \`/${commandName}\`.`,
-      ephemeral: true
-    };
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(msg).catch(() => {});
-    } else {
-      await interaction.reply(msg).catch(() => {});
-    }
-  }
+  // Hand off to the queue — it handles gates, logging, and error recovery.
+  await queue.enqueue(interaction, cmd => command.run(cmd));
 });
 
 // ─── 5. Client ready ──────────────────────────────────────────────────────────
@@ -131,20 +93,20 @@ client.once('ready', async () => {
   console.log(`\n✅ Logged in as ${client.user.tag}`);
   console.log(`📦 Commands loaded: ${client.commands.size}`);
 
-  // ── Wire logger ──────────────────────────────────────────────────────────
-  // Strip any leading path components that storage already provides via its
-  // own dataDir (./data/).  ./data/settings.enc → settings.enc
+  // ── Normalise settings file path ─────────────────────────────────────────
+  // storage resolves against ./data/ already, so strip that prefix if present.
   const settingsFile = (process.env.SETTINGS_PATH || './data/settings.enc')
     .replace(/^\.\/data\//, '')
     .replace(/^data\//, '')
     .replace(/^\.\//, '');
-  let errorChannelId = null;
 
+  // ── Wire logger → Discord error channel ──────────────────────────────────
+  let errorChannelId = null;
   if (process.env.SETTINGS_KEY) {
     try {
       const settings = storage.encryptedRead(settingsFile, null);
       errorChannelId = settings?.bot?.errorChannel ?? null;
-    } catch { /* settings may not exist yet */ }
+    } catch { /* settings may not exist yet — safe to ignore */ }
   }
 
   logger.setDiscordClient(client, errorChannelId);
@@ -153,47 +115,51 @@ client.once('ready', async () => {
     : 'No error-log channel configured — errors logged to file only.'
   );
 
-  // ── Log permission summary at startup ────────────────────────────────────
-  const allowed = registry.listAllowedCommands().filter(r => r.enabled).map(r => r.name);
-  logger.info(`Allowed commands: ${allowed.length ? allowed.join(', ') : '(all — no restrictions)'}`);
+  // ── Log permission summary ────────────────────────────────────────────────
+  const allowedCmds = registry.listAllowedCommands().filter(r => r.enabled).map(r => r.name);
+  logger.info(`Allowed commands: ${allowedCmds.length ? allowedCmds.join(', ') : '(all — no restrictions)'}`);
 
   const roleMappings = permissions.listRoleMap();
   if (roleMappings.length > 0) {
-    logger.info(`Role mappings loaded for: ${roleMappings.map(r => r.command).join(', ')}`);
+    logger.info(`Role mappings active for: ${roleMappings.map(r => r.command).join(', ')}`);
   }
 
-  // ── Start GitHub webhook if configured ───────────────────────────────────
-  if (process.env.GITHUB_WEBHOOK_SECRET || process.env.GITHUB_WEBHOOK_PORT) {
+  // ── GitHub integration ────────────────────────────────────────────────────
+  const githubMode = (process.env.GITHUB_MODE || 'none').toLowerCase();
+
+  if (githubMode === 'webhook') {
     _startWebhookServer(settingsFile);
+
+  } else if (githubMode === 'polling' || githubMode === 'polling_pat') {
+    _startPoller(settingsFile);
+
+  } else {
+    logger.info('GitHub integration: disabled (GITHUB_MODE=none)');
   }
 });
 
-// ─── 6. GitHub webhook server ─────────────────────────────────────────────────
+// ─── 6a. GitHub integration — webhook mode ────────────────────────────────────
 
 function _startWebhookServer(settingsFile) {
-  const webhook = createWebhook();
-
-  let notifyChannelId = null;
-  if (process.env.SETTINGS_KEY) {
-    try {
-      // settingsFile is already normalised by the caller
-      const settings = storage.encryptedRead(settingsFile, null);
-      notifyChannelId = settings?.bot?.errorChannel ?? null;
-    } catch { /* no-op */ }
+  if (!process.env.GITHUB_WEBHOOK_SECRET) {
+    logger.warn('GITHUB_MODE=webhook but GITHUB_WEBHOOK_SECRET is not set — payloads will NOT be signature-verified.');
   }
 
-  // push
+  const webhook = createWebhook();
+  const notifyChannelId = _loadNotifyChannel(settingsFile);
+
   webhook.onPush(async ({ branch, commits, pusher, repo }) => {
     const lines = [
       `📦 **Push** → \`${repo}\` / \`${branch}\``,
       `   👤 ${pusher.name || 'unknown'} — ${commits.length} commit(s)`,
-      ...commits.slice(0, 3).map(c => `   • \`${c.id?.slice(0, 7)}\` ${c.message?.split('\n')[0]}`)
+      ...commits.slice(0, 3).map(c =>
+        `   • \`${c.id?.slice(0, 7)}\` ${c.message?.split('\n')[0]}`
+      )
     ];
-    logger.info(`GitHub push: ${repo}@${branch} (${commits.length})`);
+    logger.info(`GitHub push: ${repo}@${branch} (${commits.length} commits)`);
     await _notify(notifyChannelId, lines.join('\n'));
   });
 
-  // pull_request
   webhook.onPullRequest(async ({ action, number, title, url, author, repo }) => {
     if (!['opened', 'closed', 'reopened'].includes(action)) return;
     const verb = { opened: '🟢 opened', closed: '🔴 closed', reopened: '🔄 reopened' }[action];
@@ -203,7 +169,6 @@ function _startWebhookServer(settingsFile) {
     logger.info(`GitHub PR #${number} ${action}: ${repo}`);
   });
 
-  // workflow_run
   webhook.onWorkflowRun(async ({ workflow, conclusion, branch, url, repo }) => {
     if (!conclusion) return;
     const emoji = conclusion === 'success' ? '✅' : '❌';
@@ -213,7 +178,6 @@ function _startWebhookServer(settingsFile) {
     logger.info(`GitHub workflow "${workflow}" ${conclusion}: ${repo}`);
   });
 
-  // release
   webhook.onRelease(async ({ action, tag, name, url, repo }) => {
     if (action !== 'published') return;
     await _notify(notifyChannelId,
@@ -227,13 +191,59 @@ function _startWebhookServer(settingsFile) {
   });
 }
 
+// ─── 6b. GitHub integration — polling mode ────────────────────────────────────
+
+function _startPoller(settingsFile) {
+  const notifyChannelId = _loadNotifyChannel(settingsFile);
+  const emitter = startPolling(); // reads GITHUB_MODE, GITHUB_REPO, GITHUB_PAT, GITHUB_POLL_INTERVAL
+
+  emitter.on('commits', async ({ repo, commits }) => {
+    for (const c of commits) {
+      await _notify(notifyChannelId,
+        `📦 **New commit** on \`${repo}\`\n` +
+        `   \`${c.short}\` ${c.message}\n` +
+        `   👤 ${c.author}  🔗 ${c.url}`
+      );
+    }
+  });
+
+  emitter.on('issues', async ({ repo, issues }) => {
+    for (const i of issues) {
+      const labels = i.labels.length ? `  [${i.labels.join(', ')}]` : '';
+      await _notify(notifyChannelId,
+        `🐛 **New issue #${i.number}** on \`${repo}\`${labels}\n` +
+        `   ${i.title}\n` +
+        `   👤 ${i.author}  🔗 ${i.url}`
+      );
+    }
+  });
+
+  emitter.on('error', err => {
+    logger.warn('GitHub poller error', { error: err.message });
+  });
+}
+
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+
+/** Read the notify channel from encrypted settings (best-effort). */
+function _loadNotifyChannel(settingsFile) {
+  if (!process.env.SETTINGS_KEY) return null;
+  try {
+    const settings = storage.encryptedRead(settingsFile, null);
+    return settings?.bot?.errorChannel ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Post a plain-text message to a Discord channel (best-effort, no throw). */
 async function _notify(channelId, message) {
   if (!channelId) return;
   try {
     const ch = await client.channels.fetch(channelId);
     if (ch) await ch.send(message);
   } catch (err) {
-    logger.warn('Could not post GitHub notification', { error: err.message });
+    logger.warn('Could not post GitHub notification to Discord', { error: err.message });
   }
 }
 

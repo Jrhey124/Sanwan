@@ -260,22 +260,114 @@ async function step3BuildEnv(mode) {
   vars.SETTINGS_KEY  = settingsKey;
   vars.SETTINGS_PATH = await askVar('SETTINGS_PATH', 'Settings file path', './data/settings.enc');
 
-  // GitHub webhook ───────────────────────────────────────────────────────────
-  const hasWebhook = !!(existing.GITHUB_WEBHOOK_SECRET);
-  const setupWebhook = await confirm(
-    `\n  Configure GitHub webhook?${hasWebhook ? ' (already configured)' : ''}`,
-    hasWebhook
+  // ─── GitHub integration ────────────────────────────────────────────────────
+  //
+  // Step 1 of the spec: y/N gate → mode selector → mode-specific inputs.
+  // Writes GITHUB_MODE plus whatever vars that mode needs.
+
+  print('\n  GitHub integration (optional):', 'cyan');
+  const currentMode  = existing.GITHUB_MODE || 'none';
+  const hasGitHub    = currentMode !== 'none';
+
+  const setupGitHub  = await confirm(
+    `\n  Configure GitHub integration?${hasGitHub ? ` (current: ${currentMode})` : ''}`,
+    hasGitHub
   );
-  if (setupWebhook) {
-    print('  GitHub webhook:', 'cyan');
-    vars.GITHUB_WEBHOOK_SECRET = await askVar('GITHUB_WEBHOOK_SECRET', 'HMAC secret (set the same value in GitHub repo → Settings → Webhooks)');
-    vars.GITHUB_WEBHOOK_PORT   = await askVar('GITHUB_WEBHOOK_PORT',   'Listen port', '3000');
-    vars.GITHUB_WEBHOOK_PATH   = await askVar('GITHUB_WEBHOOK_PATH',   'URL path',    '/webhook');
-  } else {
-    print('  · GitHub webhook skipped.', 'dim');
+
+  if (!setupGitHub) {
+    print('  · GitHub integration skipped.', 'dim');
+    // Preserve every existing GitHub var unchanged
+    vars.GITHUB_MODE           = existing.GITHUB_MODE           || 'none';
+    vars.GITHUB_REPO           = existing.GITHUB_REPO           || '';
+    vars.GITHUB_PAT            = existing.GITHUB_PAT            || '';
+    vars.GITHUB_POLL_INTERVAL  = existing.GITHUB_POLL_INTERVAL  || '60000';
     vars.GITHUB_WEBHOOK_SECRET = existing.GITHUB_WEBHOOK_SECRET || '';
     vars.GITHUB_WEBHOOK_PORT   = existing.GITHUB_WEBHOOK_PORT   || '3000';
     vars.GITHUB_WEBHOOK_PATH   = existing.GITHUB_WEBHOOK_PATH   || '/webhook';
+
+  } else {
+    // ── Mode selector ────────────────────────────────────────────────────────
+    print('');
+    print('  Choose mode:', 'cyan');
+    print('    [1] Polling  — works anywhere, public repos (optional PAT for private)', 'reset');
+    print('    [2] Webhook  — requires public URL + secret', 'reset');
+    if (hasGitHub) {
+      print(`    Enter to keep current (${currentMode})`, 'dim');
+    }
+
+    const modeChoice = await ask('  Mode [1/2]: ');
+
+    let githubMode;
+    if (modeChoice === '2') {
+      githubMode = 'webhook';
+    } else if (modeChoice === '1' || modeChoice === '') {
+      githubMode = 'polling';
+    } else {
+      githubMode = currentMode !== 'none' ? currentMode : 'polling';
+    }
+
+    vars.GITHUB_MODE = githubMode;
+
+    // ── Polling ──────────────────────────────────────────────────────────────
+    if (githubMode === 'polling') {
+      vars.GITHUB_REPO = await askVar(
+        'GITHUB_REPO', 'Repository  (e.g. owner/repo)', existing.GITHUB_REPO || ''
+      );
+      vars.GITHUB_POLL_INTERVAL = await askVar(
+        'GITHUB_POLL_INTERVAL', 'Poll interval in milliseconds', existing.GITHUB_POLL_INTERVAL || '60000'
+      );
+
+      print('');
+      print('  Enter Personal Access Token (PAT) for private repos (optional):', 'cyan');
+      const pat = await ask('  PAT (blank to skip): ');
+      vars.GITHUB_PAT = pat || existing.GITHUB_PAT || '';
+
+      if (vars.GITHUB_PAT) {
+        vars.GITHUB_MODE = 'polling_pat'; // upgrade mode silently
+        print('  ✓ PAT set — private repos enabled (polling_pat).', 'green');
+      } else {
+        print('  · No PAT — public repos only.', 'dim');
+      }
+
+      // Clear webhook vars
+      vars.GITHUB_WEBHOOK_SECRET = existing.GITHUB_WEBHOOK_SECRET || '';
+      vars.GITHUB_WEBHOOK_PORT   = existing.GITHUB_WEBHOOK_PORT   || '3000';
+      vars.GITHUB_WEBHOOK_PATH   = existing.GITHUB_WEBHOOK_PATH   || '/webhook';
+
+      print(`\n  ✓ GitHub polling configured for: ${vars.GITHUB_REPO || '(no repo set)'}`, 'green');
+
+    // ── Webhook ──────────────────────────────────────────────────────────────
+    } else {
+      print('');
+      print('  Enter webhook port (default 3000):', 'cyan');
+      vars.GITHUB_WEBHOOK_PORT = await ask('  > ') || existing.GITHUB_WEBHOOK_PORT || '3000';
+
+      print('');
+      print('  Enter webhook secret (optional but recommended):', 'cyan');
+      hint('Webhook requests will be verified with HMAC-SHA256 if secret is set.');
+      vars.GITHUB_WEBHOOK_SECRET = await ask('  > ') || existing.GITHUB_WEBHOOK_SECRET || '';
+
+      vars.GITHUB_WEBHOOK_PATH = await askVar(
+        'GITHUB_WEBHOOK_PATH', 'URL path', existing.GITHUB_WEBHOOK_PATH || '/webhook'
+      );
+      vars.GITHUB_REPO = await askVar(
+        'GITHUB_REPO', 'Repository (optional, for display)', existing.GITHUB_REPO || ''
+      );
+
+      // Clear polling vars
+      vars.GITHUB_PAT           = existing.GITHUB_PAT           || '';
+      vars.GITHUB_POLL_INTERVAL = existing.GITHUB_POLL_INTERVAL || '60000';
+
+      if (!vars.GITHUB_WEBHOOK_SECRET) {
+        print('  ⚠ No secret set — incoming payloads will NOT be signature-verified.', 'yellow');
+      } else {
+        print('  ✓ Webhook HMAC-SHA256 secret configured.', 'green');
+      }
+
+      print(`\n  ✓ Webhook configured: port ${vars.GITHUB_WEBHOOK_PORT}, path ${vars.GITHUB_WEBHOOK_PATH}`, 'green');
+      print('    Register this payload URL in GitHub repo → Settings → Webhooks:');
+      print(`      http://<your-public-ip>:${vars.GITHUB_WEBHOOK_PORT}${vars.GITHUB_WEBHOOK_PATH}`, 'cyan');
+    }
   }
 
   writeEnvFile(vars);
@@ -446,56 +538,102 @@ async function step5AllowedCommands() {
   );
 
   // ── 5c. Explicit owner shell commands ────────────────────────────────────
+  //
+  // Format:  <shortcut> <filepath> [parameters]
+  //
+  //   shortcut   — short name used in /cmd  (e.g. "build", "deploy")
+  //   filepath   — absolute or relative path to the executable/script
+  //   parameters — optional {placeholder} tokens
+  //
+  // Examples:
+  //   build ./scripts/build.sh
+  //   deploy ./scripts/deploy.sh {branch}
+  //   catfile /usr/bin/cat {filename}
+  //   backup C:\tools\backup.exe {source} {destination}
+
   print('\n  Define explicit commands Sanwan is allowed to run.', 'cyan');
-  hint('Enter one command per line. Use {name} for parameters.');
-  hint('Examples:  script.exe');
-  hint('           script1.exe {param1} {param2}');
-  hint('           cat script.exe');
+  print('  Format:  <shortcut> <filepath> [parameters]', 'cyan');
+  hint('shortcut   — short name for /cmd  (e.g. "build", "catfile")');
+  hint('filepath   — path to executable/script  (absolute or relative)');
+  hint('parameters — optional, use {name} placeholders');
+  hint('');
+  hint('Examples:');
+  hint('  build ./scripts/build.sh');
+  hint('  deploy ./scripts/deploy.sh {branch}');
+  hint('  catfile /usr/bin/cat {filename}');
+  hint('  backup C:\\tools\\backup.exe {source} {destination}');
+  hint('');
   hint('Leave a blank line when done.');
 
   // Show existing shell commands so re-running setup is non-destructive
-  const existing = registry.listAllowedCommands().filter(r => r.type === 'shell');
-  if (existing.length > 0) {
-    print('\n  Currently registered shell commands:', 'cyan');
-    existing.forEach(r => {
+  const existingShell = registry.listAllowedCommands().filter(r => r.type === 'shell');
+  if (existingShell.length > 0) {
+    print('\n  Currently registered commands:', 'cyan');
+    existingShell.forEach(r => {
       const flag = r.enabled ? '✓' : '✗';
-      print(`    ${flag}  ${r.command}`, r.enabled ? 'green' : 'dim');
+      print(`    ${flag}  ${r.id.padEnd(14)} ${r.filepath || ''}  ${r.params || ''}`, r.enabled ? 'green' : 'dim');
     });
     print('');
   }
 
-  // Collect new entries until blank line
-  const added = [];
+  // Collect entries until blank line
+  const addedCmds = [];
   while (true) {
     const line = await ask('  > ');
     if (line === '') break;
 
-    // Use the base executable/command as the ID (stripped of params)
-    const id = _shellCommandId(line);
+    // Parse: first token = shortcut, second = filepath, rest = params string
+    const tokens    = line.trim().split(/\s+/);
+    const shortcut  = tokens[0];
+    const filepath  = tokens[1];
+    const params    = tokens.slice(2).join(' '); // may be empty
 
-    // If this ID already exists, update it; otherwise add
-    const existingEntry = registry.listAllowedCommands().find(r => r.id === id);
-    if (existingEntry) {
-      registry.updateAllowedCommand(id, { command: line, enabled: true });
-      print(`    ↺ Updated: ${line}`, 'yellow');
-    } else {
-      registry.addAllowedCommand({
-        id,
-        name:        id,
-        description: `Owner shell command: ${line}`,
-        enabled:     true,
-        type:        'shell',
-        command:     line
-      });
-      print(`    ✓ Added: ${line}`, 'green');
+    if (!shortcut || !filepath) {
+      print('  ✗ Format: <shortcut> <filepath> [parameters]', 'red');
+      print('    Example: build ./scripts/build.sh {branch}', 'dim');
+      continue;
     }
-    added.push(line);
+
+    // Validate shortcut is alphanumeric + dash/underscore
+    if (!/^[a-zA-Z0-9_-]+$/.test(shortcut)) {
+      print(`  ✗ Shortcut "${shortcut}" must contain only letters, numbers, - and _`, 'red');
+      continue;
+    }
+
+    // Build the stored record
+    const record = {
+      id:          shortcut,
+      name:        shortcut,
+      description: `${filepath}${params ? ' ' + params : ''}`,
+      enabled:     true,
+      type:        'shell',
+      filepath,
+      params,
+      // Full runnable string — callers substitute {placeholders} at runtime
+      command:     `${filepath}${params ? ' ' + params : ''}`
+    };
+
+    const existingEntry = registry.listAllowedCommands().find(r => r.id === shortcut);
+    if (existingEntry) {
+      registry.updateAllowedCommand(shortcut, {
+        filepath, params, command: record.command, description: record.description, enabled: true
+      });
+      print(`    ↺ Updated: ${shortcut} → ${filepath}${params ? ' ' + params : ''}`, 'yellow');
+    } else {
+      try {
+        registry.addAllowedCommand(record);
+        print(`    ✓ Added:   ${shortcut} → ${filepath}${params ? ' ' + params : ''}`, 'green');
+        addedCmds.push(shortcut);
+      } catch (err) {
+        print(`    ✗ ${err.message}`, 'red');
+      }
+    }
   }
 
-  if (added.length === 0 && existing.length === 0) {
+  if (addedCmds.length === 0 && existingShell.length === 0) {
     print('  · No shell commands registered.', 'dim');
   } else {
-    print(`\n  ✓ Shell commands saved (${added.length} new, ${existing.length} pre-existing).`, 'green');
+    print(`\n  ✓ Commands saved (${addedCmds.length} new, ${existingShell.length} pre-existing).`, 'green');
   }
 }
 
@@ -535,26 +673,6 @@ function _setSlashCommand(registry, name, enabled, description) {
   } else {
     registry.addAllowedCommand({ id: name, name, description, enabled, type: 'bot' });
   }
-}
-
-/**
- * Derive a stable registry ID from a raw shell command string.
- * Takes the first token (the executable / verb), strips path separators
- * and extension so "path/to/script.exe" becomes "script".
- *
- * @param {string} commandLine  e.g. "script1.exe {param1}"
- * @returns {string}
- */
-function _shellCommandId(commandLine) {
-  const base  = commandLine.trim().split(/\s+/)[0];        // first token
-  const noExt = base.replace(/\.[^/.]+$/, '');              // strip extension
-  const name  = noExt.replace(/.*[/\\]/, '');               // strip path prefix
-  // Append a short hash so two different commands with the same binary name
-  // can coexist (e.g. "script.exe start" vs "script.exe stop").
-  const hash  = commandLine.trim().split('').reduce(
-    (acc, ch) => (acc * 31 + ch.charCodeAt(0)) & 0xffff, 0
-  ).toString(16).padStart(4, '0');
-  return `${name}_${hash}`;
 }
 
 // ─── Step 5b — Role-based permissions ────────────────────────────────────────
@@ -875,28 +993,51 @@ async function step7bDeployServices() {
   print('\n  ✓ Services saved.', 'green');
 }
 
-// ─── Step 8 — GitHub webhook instructions ────────────────────────────────────
+// ─── Step 8 — GitHub integration summary ─────────────────────────────────────
+//
+// Configuration was already captured in step 3 (Build .env).
+// This step just summarises what was saved and prints any relevant run commands.
 
 function step8GitHubWebhook(envVars) {
-  section('Step 8 — GitHub Webhook');
+  section('Step 8 — GitHub Integration Summary');
 
-  const secret = envVars.GITHUB_WEBHOOK_SECRET;
-  const port   = envVars.GITHUB_WEBHOOK_PORT || '3000';
-  const wpath  = envVars.GITHUB_WEBHOOK_PATH || '/webhook';
+  const mode = envVars.GITHUB_MODE || 'none';
 
-  if (!secret) {
-    print('  ⚠ GITHUB_WEBHOOK_SECRET not set — payloads will NOT be signature-verified.', 'yellow');
-  } else {
-    print('  ✓ Webhook HMAC secret configured.', 'green');
+  if (mode === 'none') {
+    print('  · GitHub integration disabled.', 'dim');
+    return;
   }
 
-  print('\n  GitHub repo setup:');
-  print(`  1. Payload URL : http://<your-server>:${port}${wpath}`);
-  print('  2. Content type: application/json');
-  print('  3. Secret      : <value of GITHUB_WEBHOOK_SECRET>');
-  print('  4. Events      : push, pull_request, workflow_run, release');
-  print('\n  Run locally:  npx ngrok http ' + port, 'cyan');
-  print('  Start server: npm run webhook', 'cyan');
+  if (mode === 'webhook') {
+    const secret = envVars.GITHUB_WEBHOOK_SECRET;
+    const port   = envVars.GITHUB_WEBHOOK_PORT || '3000';
+    const wpath  = envVars.GITHUB_WEBHOOK_PATH  || '/webhook';
+
+    print(`  Mode   : webhook`, 'green');
+    print(`  Port   : ${port}`);
+    print(`  Path   : ${wpath}`);
+    print(`  Secret : ${secret ? '✓ set' : '⚠ not set (no signature verification)'}`,
+          secret ? 'green' : 'yellow');
+    print('');
+    print('  Payload URL to register in GitHub repo → Settings → Webhooks:');
+    print(`    http://<your-public-ip>:${port}${wpath}`, 'cyan');
+    print('');
+    print('  Start webhook server:  npm run webhook', 'cyan');
+
+  } else {
+    // polling or polling_pat
+    const repo     = envVars.GITHUB_REPO || '(not set)';
+    const interval = Number(envVars.GITHUB_POLL_INTERVAL || 60000) / 1000;
+    const hasPAT   = !!(envVars.GITHUB_PAT);
+
+    print(`  Mode     : ${mode}`, 'green');
+    print(`  Repo     : ${repo}`);
+    print(`  Interval : every ${interval}s`);
+    print(`  Auth     : ${hasPAT ? '✓ PAT set (private repos enabled)' : 'no PAT (public repos only)'}`,
+          hasPAT ? 'green' : 'dim');
+    print('');
+    print('  Polling starts automatically when the bot starts:  npm start', 'cyan');
+  }
 }
 
 // ─── Step 9 — Daemon / service install ───────────────────────────────────────
