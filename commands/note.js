@@ -440,7 +440,7 @@ module.exports = {
     }
 
     const body      = note.content.length > 0 ? note.content.join('\n') : '*(empty note)*';
-    const truncated = body.length > 1800 ? body.slice(0, 1800) + '\n…(truncated)' : body;
+    const truncated = body.length > 100 ? body.slice(0, 100) + '…' : body;
 
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)
@@ -671,10 +671,24 @@ module.exports = {
 
     const remaining = storage.list(NOTES_FILE, NOTES_KEY).length;
 
-    await interaction.reply({
-      content: `🗑️ Popped last entry: \`${last.nid}\` — **"${last.title}"**\nRemaining notes: **${remaining}**`,
-      ephemeral: false
-    });
+    // Build content preview — show all lines, truncated to fit Discord embed
+    const body      = last.content.length > 0 ? last.content.join('\n') : '*(empty note)*';
+    const truncated = body.length > 100 ? body.slice(0, 100) + '…' : body;
+
+    const embed = new EmbedBuilder()
+      .setColor(0xed4245)
+      .setTitle('🗑️ Note Popped')
+      .addFields(
+        { name: 'ID',       value: `\`${last.nid}\``,  inline: true },
+        { name: 'Title',    value: last.title,           inline: true },
+        { name: 'Lines',    value: `${last.content.length}`, inline: true },
+        { name: 'Content',  value: `\`\`\`\n${truncated}\n\`\`\``, inline: false },
+        { name: 'Remaining', value: `${remaining} note(s) left`, inline: false }
+      )
+      .setFooter({ text: `Deleted by ${interaction.user.tag}` })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed], ephemeral: false });
   },
 
   // ─── export ───────────────────────────────────────────────────────────────
