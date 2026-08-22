@@ -696,6 +696,336 @@ function T19_setupEnvGuard() {
   }
 }
 
+// ─── T20 — Shell command registry record shape ───────────────────────────────
+
+function T20_shellCommandShape() {
+  section('T20 — Shell Command Registry Record Shape');
+
+  if (!process.env.SETTINGS_KEY) { warn('Shell command shape', 'SETTINGS_KEY not set — skipping'); return; }
+
+  try {
+    const reg     = require('./utils/registry');
+    const shells  = reg.listAllowedCommands().filter(r => r.type === 'shell');
+
+    if (shells.length === 0) {
+      warn('Shell commands', 'No shell-type entries in registry — add one via npm run setup');
+      return;
+    }
+
+    for (const cmd of shells) {
+      const missing = ['id', 'name', 'type', 'filepath', 'command'].filter(f => !cmd[f]);
+      if (missing.length > 0) {
+        fail(`Shell record "${cmd.id || '?'}"`, `missing required fields: ${missing.join(', ')}`);
+      } else {
+        pass(`Shell record "${cmd.id}"`, `filepath="${cmd.filepath}" command="${cmd.command.slice(0, 60)}"`);
+      }
+
+      // type must be exactly 'shell'
+      cmd.type === 'shell'
+        ? pass(`  ${cmd.id}: type`, 'shell ✓')
+        : fail(`  ${cmd.id}: type`, `expected "shell", got "${cmd.type}"`);
+
+      // command must contain the filepath as a prefix
+      if (cmd.command && cmd.filepath && !cmd.command.startsWith(cmd.filepath)) {
+        fail(`  ${cmd.id}: command prefix`, `command "${cmd.command.slice(0, 50)}" does not start with filepath "${cmd.filepath}"`);
+      } else if (cmd.command && cmd.filepath) {
+        pass(`  ${cmd.id}: command prefix`, 'filepath is the command prefix ✓');
+      }
+
+      // {placeholders} in command must match placeholders in params
+      if (cmd.params) {
+        const inCommand = [...(cmd.command || '').matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
+        const inParams  = [...(cmd.params || '').matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
+        JSON.stringify(inCommand) === JSON.stringify(inParams)
+          ? pass(`  ${cmd.id}: placeholder consistency`, `${inCommand.join(', ') || '(none)'}`)
+          : fail(`  ${cmd.id}: placeholder consistency`, `command has [${inCommand}] but params has [${inParams}]`);
+      }
+    }
+  } catch (err) {
+    fail('Shell command shape', err.message);
+  }
+}
+
+// ─── T21 — cmd.js buildData() output ─────────────────────────────────────────
+
+function T21_cmdBuildData() {
+  section('T21 — cmd.js buildData() SlashCommandBuilder Output');
+
+  try {
+    // Clear cache so cmd.js is freshly loaded with current SETTINGS_KEY
+    const cmdPath = require('path').join(__dirname, 'commands', 'cmd.js');
+    delete require.cache[require.resolve(cmdPath)];
+    const cmdModule = require(cmdPath);
+
+    if (typeof cmdModule.buildData !== 'function') {
+      fail('buildData export', 'buildData() is not exported from cmd.js');
+      return;
+    }
+    pass('buildData export', 'exported ✓');
+
+    const builder = cmdModule.buildData();
+    if (!builder || typeof builder.toJSON !== 'function') {
+      fail('buildData() return', 'does not return a SlashCommandBuilder');
+      return;
+    }
+    pass('buildData() return', 'returns a SlashCommandBuilder');
+
+    const json = builder.toJSON();
+    json.name === 'cmd'
+      ? pass('builder name', 'cmd ✓')
+      : fail('builder name', `expected "cmd", got "${json.name}"`);
+
+    const opts = json.options || [];
+    opts.length > 0
+      ? pass('builder options', `${opts.length} option(s) defined`)
+      : fail('builder options', 'no options — shortcut selector is missing');
+
+    const shortcutOpt = opts.find(o => o.name === 'shortcut');
+    shortcutOpt
+      ? pass('shortcut option exists', `required=${shortcutOpt.required}`)
+      : fail('shortcut option', 'no "shortcut" option found');
+
+    // If registry has shell entries, choices should match
+    if (process.env.SETTINGS_KEY) {
+      const reg    = require('./utils/registry');
+      const shells = reg.listAllowedCommands().filter(r => r.type === 'shell' && r.enabled !== false);
+
+      if (shells.length > 0 && shortcutOpt) {
+        const choices     = shortcutOpt.choices || [];
+        const choiceNames = choices.map(c => c.value).sort();
+        const shellIds    = shells.slice(0, 25).map(s => s.id).sort();
+
+        JSON.stringify(choiceNames) === JSON.stringify(shellIds)
+          ? pass('shortcut choices match registry', choiceNames.join(', '))
+          : fail('shortcut choices match registry',
+              `choices=[${choiceNames}] vs registry=[${shellIds}]`);
+      }
+    }
+
+  } catch (err) {
+    fail('cmd.js buildData', err.message);
+  }
+}
+
+// ─── T22 — Placeholder substitution unit test ─────────────────────────────────
+
+function T22_placeholderSubstitution() {
+  section('T22 — Placeholder Substitution Logic');
+
+  // We test the substitution logic directly without needing a registry or Discord
+  function substitute(command, params) {
+    let resolved = command;
+    const placeholders = new Set(
+      [...resolved.matchAll(/\{(\w+)\}/g)].map(m => m[1])
+    );
+    for (const pName of placeholders) {
+      resolved = resolved.replaceAll(`{${pName}}`, params[pName.toLowerCase()] ?? '');
+    }
+    return resolved;
+  }
+
+  const cases = [
+    {
+      label:    'single placeholder',
+      command:  'C:\\Windows\\System32\\ping.exe {hostname}',
+      params:   { hostname: '8.8.8.8' },
+      expected: 'C:\\Windows\\System32\\ping.exe 8.8.8.8'
+    },
+    {
+      label:    'quoted arg with placeholder',
+      command:  'C:\\Windows\\System32\\cmd.exe /c dir {path}',
+      params:   { path: 'C:\\Users' },
+      expected: 'C:\\Windows\\System32\\cmd.exe /c dir C:\\Users'
+    },
+    {
+      label:    'multiple different placeholders',
+      command:  './backup.sh {source} {destination}',
+      params:   { source: '/var/data', destination: '/backup' },
+      expected: './backup.sh /var/data /backup'
+    },
+    {
+      label:    'repeated placeholder',
+      command:  './script.sh {name} --alias {name}',
+      params:   { name: 'myservice' },
+      expected: './script.sh myservice --alias myservice'
+    },
+    {
+      label:    'missing param → empty string',
+      command:  './tool.sh {required}',
+      params:   {},
+      expected: './tool.sh '
+    },
+    {
+      label:    'no placeholders (plain command)',
+      command:  'uptime',
+      params:   {},
+      expected: 'uptime'
+    }
+  ];
+
+  for (const { label, command, params, expected } of cases) {
+    const result = substitute(command, params);
+    result === expected
+      ? pass(`Substitution: ${label}`, `"${result.slice(0, 60)}"`)
+      : fail(`Substitution: ${label}`, `expected "${expected}" got "${result}"`);
+  }
+}
+
+// ─── T23 — Input line tokenisation ───────────────────────────────────────────
+
+function T23_lineTokenisation() {
+  section('T23 — Setup Input Line Tokenisation (_tokeniseLine)');
+
+  // Load the tokeniser from setup.js.  It is not exported so we extract it
+  // by reading the source and eval'ing just the function.
+  let tokeniseLine;
+  try {
+    const src = require('fs').readFileSync(require('path').join(__dirname, 'setup.js'), 'utf8');
+    const match = src.match(/function _tokeniseLine[\s\S]*?\n\}/);
+    if (!match) {
+      warn('_tokeniseLine', 'function not found in setup.js source — skipping');
+      return;
+    }
+    // eslint-disable-next-line no-eval
+    tokeniseLine = eval(`(${match[0]})`);
+    pass('_tokeniseLine', 'extracted from setup.js source');
+  } catch (err) {
+    fail('_tokeniseLine extraction', err.message);
+    return;
+  }
+
+  const cases = [
+    {
+      label:    'simple unquoted tokens',
+      input:    'pingtest C:\\Windows\\System32\\ping.exe {hostname}',
+      expected: ['pingtest', 'C:\\Windows\\System32\\ping.exe', '{hostname}']
+    },
+    {
+      label:    'quoted multi-word arg',
+      input:    'dir C:\\Windows\\System32\\cmd.exe "/c dir {path}"',
+      expected: ['dir', 'C:\\Windows\\System32\\cmd.exe', '/c dir {path}']
+    },
+    {
+      label:    'multiple quoted args',
+      input:    'tool ./script.sh "--flag {val}" "--other {x}"',
+      expected: ['tool', './script.sh', '--flag {val}', '--other {x}']
+    },
+    {
+      label:    'no args (just shortcut + filepath)',
+      input:    'uptime /usr/bin/uptime',
+      expected: ['uptime', '/usr/bin/uptime']
+    },
+    {
+      label:    'extra whitespace between tokens',
+      input:    'build  ./build.sh   {branch}',
+      expected: ['build', './build.sh', '{branch}']
+    }
+  ];
+
+  for (const { label, input, expected } of cases) {
+    try {
+      const result = tokeniseLine(input);
+      JSON.stringify(result) === JSON.stringify(expected)
+        ? pass(`Tokenise: ${label}`, JSON.stringify(result))
+        : fail(`Tokenise: ${label}`, `expected ${JSON.stringify(expected)} got ${JSON.stringify(result)}`);
+    } catch (err) {
+      fail(`Tokenise: ${label}`, err.message);
+    }
+  }
+}
+
+// ─── T24 — systeminfo.js pure-Node helpers ────────────────────────────────────
+
+function T24_systeminfoHelpers() {
+  section('T24 — systeminfo.js Pure-Node Data Helpers');
+
+  // We can load systeminfo.js and call its internal helpers if we expose them,
+  // but since they are not exported we test the observable behaviour: the module
+  // loads without error, has the expected exports, and the data property is a
+  // valid SlashCommandBuilder.
+
+  try {
+    const siPath = require('path').join(__dirname, 'commands', 'systeminfo.js');
+    delete require.cache[require.resolve(siPath)];
+    const si = require(siPath);
+
+    si.name === 'systeminfo'
+      ? pass('systeminfo name', 'systeminfo ✓')
+      : fail('systeminfo name', `got "${si.name}"`);
+
+    typeof si.run === 'function'
+      ? pass('systeminfo run()', 'exported ✓')
+      : fail('systeminfo run()', 'not a function');
+
+    const json = si.data?.toJSON?.();
+    json
+      ? pass('systeminfo data', `SlashCommandBuilder → name="${json.name}"`)
+      : fail('systeminfo data', 'data property is missing or not a SlashCommandBuilder');
+
+    if (json) {
+      const opts    = json.options || [];
+      const section = opts.find(o => o.name === 'section');
+      section
+        ? pass('systeminfo section option', `${section.choices?.length || 0} choices`)
+        : fail('systeminfo section option', 'no "section" option found');
+
+      const choiceValues = (section?.choices || []).map(c => c.value).sort();
+      const expected     = ['all', 'disks', 'network', 'resources'].sort();
+      JSON.stringify(choiceValues) === JSON.stringify(expected)
+        ? pass('systeminfo section choices', choiceValues.join(', '))
+        : fail('systeminfo section choices', `expected [${expected}] got [${choiceValues}]`);
+    }
+
+    // Verify that the pure-Node os module gives sane values
+    const osModule = require('os');
+    const totalMem = osModule.totalmem();
+    const freeMem  = osModule.freemem();
+    totalMem > 0   ? pass('os.totalmem()', `${(totalMem / 1073741824).toFixed(2)} GB`) : fail('os.totalmem()', 'returned 0');
+    freeMem  >= 0  ? pass('os.freemem()',  `${(freeMem  / 1073741824).toFixed(2)} GB`) : fail('os.freemem()',  'returned negative');
+    freeMem  < totalMem ? pass('freeMem < totalMem', 'sane ✓') : fail('freeMem < totalMem', 'free >= total — impossible');
+
+    const cpus = osModule.cpus();
+    cpus.length > 0
+      ? pass('os.cpus()', `${cpus.length} core(s): ${cpus[0].model.trim().slice(0, 40)}`)
+      : fail('os.cpus()', 'returned empty array');
+
+    const ifaces = osModule.networkInterfaces();
+    typeof ifaces === 'object'
+      ? pass('os.networkInterfaces()', `${Object.keys(ifaces).length} interface(s)`)
+      : fail('os.networkInterfaces()', 'did not return an object');
+
+  } catch (err) {
+    fail('systeminfo module', err.message);
+  }
+}
+
+// ─── T25 — deploy-commands.js flush step ─────────────────────────────────────
+
+function T25_deployFlush() {
+  section('T25 — deploy-commands.js Flush Step');
+
+  const fp = require('path').join(__dirname, 'deploy-commands.js');
+  if (!require('fs').existsSync(fp)) { fail('deploy-commands.js', 'not found'); return; }
+
+  const src = require('fs').readFileSync(fp, 'utf8');
+
+  const checks = [
+    { name: 'global flush step present',      pattern: /Routes\.applicationCommands\(/ },
+    { name: 'guild PUT step present',          pattern: /Routes\.applicationGuildCommands\(/ },
+    { name: 'flush wrapped in try/catch',      pattern: /try\s*\{[\s\S]*?applicationCommands[\s\S]*?\}\s*catch/ },
+    { name: 'loadCommandPayloads exported',    pattern: /module\.exports.*loadCommandPayloads/ },
+    { name: 'deployCommands exported',         pattern: /module\.exports.*deployCommands/ },
+    { name: 'require cache cleared for cmd',   pattern: /delete require\.cache/ },
+    { name: 'buildData called for cmd.js',     pattern: /mod\.buildData\s*&&.*mod\.buildData\(\)/ }
+  ];
+
+  for (const { name, pattern } of checks) {
+    pattern.test(src)
+      ? pass(`deploy-commands: ${name}`)
+      : fail(`deploy-commands: ${name}`, 'pattern not found in source');
+  }
+}
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 function printSummary() {
@@ -758,6 +1088,12 @@ function main() {
   T17_rolePermissions();
   T18_registry();
   T19_setupEnvGuard();
+  T20_shellCommandShape();
+  T21_cmdBuildData();
+  T22_placeholderSubstitution();
+  T23_lineTokenisation();
+  T24_systeminfoHelpers();
+  T25_deployFlush();
 
   process.exit(printSummary());
 }
@@ -795,6 +1131,12 @@ function runTests() {
   T17_rolePermissions();
   T18_registry();
   T19_setupEnvGuard();
+  T20_shellCommandShape();
+  T21_cmdBuildData();
+  T22_placeholderSubstitution();
+  T23_lineTokenisation();
+  T24_systeminfoHelpers();
+  T25_deployFlush();
 
   printSummary(); // print results, but do NOT call process.exit()
 
@@ -805,5 +1147,7 @@ module.exports = {
   runTests,
   T01_environment, T04_encryption, T05_encryptedStorage,
   T06_commandLoading, T12_osService, T09_webhook,
-  T17_rolePermissions, T18_registry, T19_setupEnvGuard
+  T17_rolePermissions, T18_registry, T19_setupEnvGuard,
+  T20_shellCommandShape, T21_cmdBuildData, T22_placeholderSubstitution,
+  T23_lineTokenisation, T24_systeminfoHelpers, T25_deployFlush
 };

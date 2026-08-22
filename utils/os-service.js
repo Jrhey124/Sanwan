@@ -289,26 +289,42 @@ function serviceStop(name) {
 }
 
 // ─── Platform-specific monitoring commands ────────────────────────────────────
+//
+// These return shell command STRINGS that are safe to run via execSync/spawnSync
+// on the target platform. They use only universally available tools:
+//
+//   Windows : wmic (built-in since XP), ipconfig (built-in), tasklist (built-in)
+//             Avoids PowerShell cmdlets which require PowerShell execution policy
+//             and are not available in all environments (e.g. restricted cloud VMs)
+//
+//   Linux   : df, free, ip/ifconfig — available on all major distros and
+//             container/cloud environments
+//
+//   macOS   : df, vm_stat, ifconfig — standard BSD tools always present
+//
+// NOTE: systeminfo.js prefers the pure Node.js os module over these shell
+// commands. These functions are kept for backward compatibility and for
+// callers that want the raw shell output string.
 
 function diskCommand() {
   const p = os.platform();
-  if (p === 'win32')  return 'Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free';
-  if (p === 'darwin') return 'df -h';
-  return 'df -h';                  // Linux default
+  if (p === 'win32')  return 'wmic logicaldisk get caption,freespace,size';
+  if (p === 'darwin') return 'df -h -x devfs';
+  return 'df -h -x tmpfs -x devtmpfs';     // Linux / cloud
 }
 
 function resourceCommand() {
   const p = os.platform();
-  if (p === 'win32')  return 'Get-Process | Sort-Object CPU -Desc | Select-Object -First 10 Name,CPU,WorkingSet';
-  if (p === 'darwin') return "top -l 1 -stats pid,command,cpu,rsize | head -20";
-  return "top -bn1 | head -20";    // Linux default
+  if (p === 'win32')  return 'tasklist /FO TABLE /NH | sort /R';
+  if (p === 'darwin') return 'vm_stat && sysctl -n hw.ncpu hw.memsize && top -l 1 -stats pid,command,cpu,rsize | head -15';
+  return 'free -h && echo "---" && ps aux --sort=-%mem | head -12';  // Linux / cloud
 }
 
 function networkCommand() {
   const p = os.platform();
-  if (p === 'win32')  return 'Get-NetIPAddress | Select-Object InterfaceAlias,IPAddress,PrefixLength';
-  if (p === 'darwin') return 'ifconfig | grep -E "^[a-z]|inet "';
-  return 'ip addr show || ifconfig'; // Linux default
+  if (p === 'win32')  return 'ipconfig';
+  if (p === 'darwin') return 'ifconfig | grep -E "^[a-zA-Z]|inet "';
+  return 'ip -brief address show 2>/dev/null || ifconfig 2>/dev/null || echo "No network tools found"';  // Linux / cloud
 }
 
 module.exports = {

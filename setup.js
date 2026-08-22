@@ -517,51 +517,58 @@ async function step5AllowedCommands() {
   _ensureHelpEnabled(registry);
   print('  ✓ /help — always enabled.', 'green');
 
-  // ── 5b. Diagnostic tools ─────────────────────────────────────────────────
-  const diagnostics = ['disks', 'resources', 'network'];
+  // ── 5b. System info tool ─────────────────────────────────────────────────
+  const diagnostics = ['systeminfo'];
 
   const enableDiag = await confirm(
-    '\n  Enable basic diagnostic tools? (/disks, /resources, /network)',
+    '\n  Enable the system info tool? (/systeminfo)',
     false
   );
 
   for (const name of diagnostics) {
     _setSlashCommand(registry, name, enableDiag,
-      `Show ${name} status`);
+      'Show disk, CPU/memory, and network status');
   }
 
   print(
     enableDiag
-      ? '  ✓ Diagnostic tools enabled.'
-      : '  · Diagnostic tools disabled.',
+      ? '  ✓ System info tool enabled.'
+      : '  · System info tool disabled.',
     enableDiag ? 'green' : 'dim'
   );
 
   // ── 5c. Explicit owner shell commands ────────────────────────────────────
   //
-  // Format:  <shortcut> <filepath> [parameters]
+  // Format:  <shortcut> <filepath> [args...]
   //
-  //   shortcut   — short name used in /cmd  (e.g. "build", "deploy")
-  //   filepath   — absolute or relative path to the executable/script
-  //   parameters — optional {placeholder} tokens
+  //   shortcut — short name used as /cmd choice (e.g. "dir", "build")
+  //   filepath — absolute or relative path to the executable
+  //   args     — optional arguments; use {name} for user-supplied placeholders.
+  //              Quote multi-word args: "/c dir {path}"
+  //
+  // The stored `command` field is: filepath + space + args (joined)
+  // Placeholders {name} become Discord slash-command options at deploy time.
   //
   // Examples:
-  //   build ./scripts/build.sh
-  //   deploy ./scripts/deploy.sh {branch}
-  //   catfile /usr/bin/cat {filename}
-  //   backup C:\tools\backup.exe {source} {destination}
+  //   pingtest C:\Windows\System32\ping.exe {hostname}
+  //   dir      C:\Windows\System32\cmd.exe "/c dir {path}"
+  //   build    ./scripts/build.sh {branch}
+  //   cat      /usr/bin/cat {filename}
+  //   backup   C:\tools\backup.exe {source} {destination}
 
   print('\n  Define explicit commands Sanwan is allowed to run.', 'cyan');
-  print('  Format:  <shortcut> <filepath> [parameters]', 'cyan');
-  hint('shortcut   — short name for /cmd  (e.g. "build", "catfile")');
-  hint('filepath   — path to executable/script  (absolute or relative)');
-  hint('parameters — optional, use {name} placeholders');
+  print('  Format:  <shortcut> <filepath> [args...]', 'cyan');
+  hint('shortcut — short name for /cmd  (e.g. "dir", "build")');
+  hint('filepath — path to executable   (absolute or relative)');
+  hint('args     — optional; use {name} placeholders for user input');
+  hint('           Quote multi-word args with double quotes');
   hint('');
   hint('Examples:');
-  hint('  build ./scripts/build.sh');
-  hint('  deploy ./scripts/deploy.sh {branch}');
-  hint('  catfile /usr/bin/cat {filename}');
-  hint('  backup C:\\tools\\backup.exe {source} {destination}');
+  hint('  pingtest C:\\Windows\\System32\\ping.exe {hostname}');
+  hint('  dir      C:\\Windows\\System32\\cmd.exe "/c dir {path}"');
+  hint('  build    ./scripts/build.sh {branch}');
+  hint('  cat      /usr/bin/cat {filename}');
+  hint('  backup   C:\\tools\\backup.exe {source} {destination}');
   hint('');
   hint('Leave a blank line when done.');
 
@@ -571,7 +578,8 @@ async function step5AllowedCommands() {
     print('\n  Currently registered commands:', 'cyan');
     existingShell.forEach(r => {
       const flag = r.enabled ? '✓' : '✗';
-      print(`    ${flag}  ${r.id.padEnd(14)} ${r.filepath || ''}  ${r.params || ''}`, r.enabled ? 'green' : 'dim');
+      const cmd  = r.command || `${r.filepath || ''} ${r.params || ''}`.trim();
+      print(`    ${flag}  ${r.id.padEnd(14)} ${cmd}`, r.enabled ? 'green' : 'dim');
     });
     print('');
   }
@@ -582,47 +590,57 @@ async function step5AllowedCommands() {
     const line = await ask('  > ');
     if (line === '') break;
 
-    // Parse: first token = shortcut, second = filepath, rest = params string
-    const tokens    = line.trim().split(/\s+/);
-    const shortcut  = tokens[0];
-    const filepath  = tokens[1];
-    const params    = tokens.slice(2).join(' '); // may be empty
+    // ── Parse the input line ──────────────────────────────────────────────
+    //
+    // Tokenise respecting double-quoted groups so that:
+    //   dir C:\cmd.exe "/c dir {path}"
+    // yields:  shortcut="dir", filepath="C:\cmd.exe", args=["/c dir {path}"]
+    //
+    // Quoted tokens have their surrounding quotes stripped.
+    const tokens = _tokeniseLine(line.trim());
+
+    const shortcut = tokens[0];
+    const filepath = tokens[1];
+    const argParts = tokens.slice(2); // may be empty
 
     if (!shortcut || !filepath) {
-      print('  ✗ Format: <shortcut> <filepath> [parameters]', 'red');
-      print('    Example: build ./scripts/build.sh {branch}', 'dim');
+      print('  ✗ Format: <shortcut> <filepath> [args...]', 'red');
+      print('    Example: dir C:\\Windows\\System32\\cmd.exe "/c dir {path}"', 'dim');
       continue;
     }
 
-    // Validate shortcut is alphanumeric + dash/underscore
     if (!/^[a-zA-Z0-9_-]+$/.test(shortcut)) {
       print(`  ✗ Shortcut "${shortcut}" must contain only letters, numbers, - and _`, 'red');
       continue;
     }
 
-    // Build the stored record
+    // Build the full command string stored in the registry.
+    // When argParts contains quoted tokens we re-join them with spaces
+    // so the stored command matches what execSync will receive.
+    const params  = argParts.join(' ');
+    const command = params ? `${filepath} ${params}` : filepath;
+
     const record = {
       id:          shortcut,
       name:        shortcut,
-      description: `${filepath}${params ? ' ' + params : ''}`,
+      description: command,        // shown in /help and /cmd
       enabled:     true,
       type:        'shell',
       filepath,
-      params,
-      // Full runnable string — callers substitute {placeholders} at runtime
-      command:     `${filepath}${params ? ' ' + params : ''}`
+      params,                      // the args portion — may contain {placeholders}
+      command                      // full invocation template
     };
 
     const existingEntry = registry.listAllowedCommands().find(r => r.id === shortcut);
     if (existingEntry) {
       registry.updateAllowedCommand(shortcut, {
-        filepath, params, command: record.command, description: record.description, enabled: true
+        filepath, params, command, description: command, enabled: true
       });
-      print(`    ↺ Updated: ${shortcut} → ${filepath}${params ? ' ' + params : ''}`, 'yellow');
+      print(`    ↺ Updated: ${shortcut} → ${command}`, 'yellow');
     } else {
       try {
         registry.addAllowedCommand(record);
-        print(`    ✓ Added:   ${shortcut} → ${filepath}${params ? ' ' + params : ''}`, 'green');
+        print(`    ✓ Added:   ${shortcut} → ${command}`, 'green');
         addedCmds.push(shortcut);
       } catch (err) {
         print(`    ✗ ${err.message}`, 'red');
@@ -635,6 +653,51 @@ async function step5AllowedCommands() {
   } else {
     print(`\n  ✓ Commands saved (${addedCmds.length} new, ${existingShell.length} pre-existing).`, 'green');
   }
+}
+
+/**
+ * Tokenise a shell-style input line respecting double-quoted groups.
+ *
+ * "dir C:\\cmd.exe \"/c dir {path}\""
+ *   → ["dir", "C:\\cmd.exe", "/c dir {path}"]
+ *
+ * Rules:
+ *   - Tokens separated by whitespace
+ *   - A token starting with " is read until the next closing "
+ *   - Surrounding quotes are stripped from the token value
+ *
+ * @param {string} line
+ * @returns {string[]}
+ */
+function _tokeniseLine(line) {
+  const tokens = [];
+  let   i      = 0;
+
+  while (i < line.length) {
+    // Skip leading whitespace
+    while (i < line.length && line[i] === ' ') i++;
+    if (i >= line.length) break;
+
+    if (line[i] === '"') {
+      // Quoted token — read until closing "
+      i++; // skip opening quote
+      let token = '';
+      while (i < line.length && line[i] !== '"') {
+        token += line[i++];
+      }
+      if (i < line.length) i++; // skip closing quote
+      tokens.push(token);
+    } else {
+      // Unquoted token — read until whitespace
+      let token = '';
+      while (i < line.length && line[i] !== ' ') {
+        token += line[i++];
+      }
+      tokens.push(token);
+    }
+  }
+
+  return tokens;
 }
 
 /**
@@ -659,18 +722,19 @@ function _ensureHelpEnabled(registry) {
 }
 
 /**
- * Add or update a slash-command entry (bot type) in the registry.
+ * Add or update a bot-type slash-command entry in the registry.
  *
- * @param {object}  registry
- * @param {string}  name
- * @param {boolean} enabled
- * @param {string}  description
+ * When enabled=false, the entry is written explicitly so Gate A knows to
+ * deny this command. Without an explicit entry, Gate A now passes through
+ * unknown commands (explicit deny list model).
  */
 function _setSlashCommand(registry, name, enabled, description) {
   const entry = registry.listAllowedCommands().find(r => r.id === name);
   if (entry) {
     registry.updateAllowedCommand(name, { enabled });
   } else {
+    // Always write the entry — enabled:false must be persisted explicitly
+    // or Gate A won't know to deny it (missing = allowed in the deny-list model)
     registry.addAllowedCommand({ id: name, name, description, enabled, type: 'bot' });
   }
 }

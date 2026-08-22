@@ -50,7 +50,15 @@ if (!fs.existsSync(commandsDir)) {
 } else {
   for (const file of fs.readdirSync(commandsDir).filter(f => f.endsWith('.js'))) {
     try {
-      const cmd = require(path.join(commandsDir, file));
+      const fullPath = path.join(commandsDir, file);
+
+      // Clear require cache so each file is read fresh from disk.
+      // This is essential for cmd.js: its `data` getter calls buildData()
+      // which reads the registry — we must not get a stale cached version.
+      delete require.cache[require.resolve(fullPath)];
+
+      const cmd = require(fullPath);
+
       if (cmd.name && typeof cmd.run === 'function') {
         client.commands.set(cmd.name, cmd);
         logger.info(`Loaded command: /${cmd.name}`);

@@ -61,3 +61,499 @@
 [2026-08-21T03:39:07.464Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
 [2026-08-21T03:39:49.341Z] [INFO] Initialized encrypted "settings.enc" with default data
 [2026-08-21T03:39:49.343Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-22T04:59:37.020Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T04:59:37.032Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T04:59:37.034Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T05:01:27.500Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-22T05:01:27.501Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-22T05:01:27.631Z] [ERROR] disks command failed {"error":"Command failed: Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free\n'Get-PSDrive' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n"}
+[2026-08-22T05:01:27.653Z] [ERROR] resources command failed {"error":"Command failed: Get-Process | Sort-Object CPU -Desc | Select-Object -First 10 Name,CPU,WorkingSet\n'Get-Process' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n"}
+[2026-08-22T05:01:40.252Z] [INFO] Loaded command: /cmd
+[2026-08-22T05:01:40.257Z] [INFO] Loaded command: /disks
+[2026-08-22T05:01:40.260Z] [INFO] Loaded command: /help
+[2026-08-22T05:01:40.262Z] [INFO] Loaded command: /logs
+[2026-08-22T05:01:40.266Z] [INFO] Loaded command: /note
+[2026-08-22T05:01:40.267Z] [INFO] Loaded command: /resources
+[2026-08-22T05:01:40.269Z] [INFO] Loaded command: /schedule
+[2026-08-22T05:01:40.270Z] [INFO] Loaded command: /task
+[2026-08-22T05:01:41.658Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T05:01:41.659Z] [INFO] Allowed commands: help, disks, resources, network, pingtest
+[2026-08-22T05:01:41.660Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T05:02:00.658Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:02:00.661Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:02:02.431Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1770}
+[2026-08-22T05:02:02.433Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:02:46.036Z] [INFO] Loaded command: /cmd
+[2026-08-22T05:02:46.042Z] [INFO] Loaded command: /disks
+[2026-08-22T05:02:46.045Z] [INFO] Loaded command: /help
+[2026-08-22T05:02:46.049Z] [INFO] Loaded command: /logs
+[2026-08-22T05:02:46.051Z] [INFO] Loaded command: /note
+[2026-08-22T05:02:46.052Z] [INFO] Loaded command: /resources
+[2026-08-22T05:02:46.053Z] [INFO] Loaded command: /schedule
+[2026-08-22T05:02:46.055Z] [INFO] Loaded command: /task
+[2026-08-22T05:02:47.737Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T05:02:47.739Z] [INFO] Allowed commands: help, disks, resources, network, pingtest
+[2026-08-22T05:02:47.741Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T05:02:52.202Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:02:52.203Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:02:53.665Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1462}
+[2026-08-22T05:02:53.666Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:16:15.100Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T05:16:15.106Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T05:16:15.108Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T05:16:56.989Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-22T05:16:56.991Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-22T05:16:57.147Z] [ERROR] disks command failed {"error":"Command failed: Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free\n'Get-PSDrive' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n"}
+[2026-08-22T05:16:57.172Z] [ERROR] resources command failed {"error":"Command failed: Get-Process | Sort-Object CPU -Desc | Select-Object -First 10 Name,CPU,WorkingSet\n'Get-Process' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n"}
+[2026-08-22T05:17:17.868Z] [INFO] Loaded command: /cmd
+[2026-08-22T05:17:17.874Z] [INFO] Loaded command: /disks
+[2026-08-22T05:17:17.877Z] [INFO] Loaded command: /help
+[2026-08-22T05:17:17.879Z] [INFO] Loaded command: /logs
+[2026-08-22T05:17:17.884Z] [INFO] Loaded command: /note
+[2026-08-22T05:17:17.886Z] [INFO] Loaded command: /resources
+[2026-08-22T05:17:17.888Z] [INFO] Loaded command: /schedule
+[2026-08-22T05:17:17.891Z] [INFO] Loaded command: /task
+[2026-08-22T05:17:19.259Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T05:17:19.260Z] [INFO] Allowed commands: help, disks, resources, network, pingtest
+[2026-08-22T05:17:19.261Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T05:20:55.193Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T05:20:55.197Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T05:20:55.198Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T05:21:16.415Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-22T05:21:16.417Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-22T05:21:16.528Z] [ERROR] disks command failed {"error":"Command failed: Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free\n'Get-PSDrive' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n"}
+[2026-08-22T05:21:16.554Z] [ERROR] resources command failed {"error":"Command failed: Get-Process | Sort-Object CPU -Desc | Select-Object -First 10 Name,CPU,WorkingSet\n'Get-Process' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n"}
+[2026-08-22T05:21:26.460Z] [INFO] Loaded command: /cmd
+[2026-08-22T05:21:26.463Z] [INFO] Loaded command: /disks
+[2026-08-22T05:21:26.467Z] [INFO] Loaded command: /help
+[2026-08-22T05:21:26.471Z] [INFO] Loaded command: /logs
+[2026-08-22T05:21:26.477Z] [INFO] Loaded command: /note
+[2026-08-22T05:21:26.478Z] [INFO] Loaded command: /resources
+[2026-08-22T05:21:26.480Z] [INFO] Loaded command: /schedule
+[2026-08-22T05:21:26.481Z] [INFO] Loaded command: /task
+[2026-08-22T05:21:27.797Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T05:21:27.798Z] [INFO] Allowed commands: help, disks, resources, network, pingtest
+[2026-08-22T05:21:27.798Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T05:21:33.504Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:21:33.505Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:21:34.980Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1475}
+[2026-08-22T05:21:34.981Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:21:43.211Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:21:43.214Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:21:44.615Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1401}
+[2026-08-22T05:21:44.617Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:05.623Z] [INFO] Loaded command: /cmd
+[2026-08-22T05:43:05.627Z] [INFO] Loaded command: /disks
+[2026-08-22T05:43:05.630Z] [INFO] Loaded command: /help
+[2026-08-22T05:43:05.632Z] [INFO] Loaded command: /logs
+[2026-08-22T05:43:05.634Z] [INFO] Loaded command: /network
+[2026-08-22T05:43:05.638Z] [INFO] Loaded command: /note
+[2026-08-22T05:43:05.639Z] [INFO] Loaded command: /ping
+[2026-08-22T05:43:05.640Z] [INFO] Loaded command: /resources
+[2026-08-22T05:43:05.642Z] [INFO] Loaded command: /schedule
+[2026-08-22T05:43:05.644Z] [INFO] Loaded command: /task
+[2026-08-22T05:43:07.191Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T05:43:07.193Z] [INFO] Allowed commands: help, disks, resources, network, pingtest
+[2026-08-22T05:43:07.194Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T05:43:15.737Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:43:15.738Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:15.774Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:43:15.775Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:16.257Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":481}
+[2026-08-22T05:43:16.731Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:16.917Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1179}
+[2026-08-22T05:43:16.919Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:40.766Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:43:40.768Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:40.803Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:43:40.805Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:41.327Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":559}
+[2026-08-22T05:43:41.349Z] [INFO] cmd: executing "pingtest" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\ping.exe google.com"}
+[2026-08-22T05:43:41.823Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:43:45.164Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"shortcut":"pingtest"}
+[2026-08-22T05:43:45.167Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":4362}
+[2026-08-22T05:43:45.168Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:16.063Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:44:16.067Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:16.079Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:44:16.081Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:16.616Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":535}
+[2026-08-22T05:44:16.801Z] [INFO] cmd: executing "pingtest" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\ping.exe youtube.com"}
+[2026-08-22T05:44:17.106Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:20.632Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"shortcut":"pingtest"}
+[2026-08-22T05:44:20.633Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":4566}
+[2026-08-22T05:44:20.634Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:35.563Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:44:35.564Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:35.580Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:44:35.581Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:36.066Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":502}
+[2026-08-22T05:44:36.295Z] [INFO] cmd: executing "pingtest" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\ping.exe 192.168.1.5"}
+[2026-08-22T05:44:36.570Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:44:48.651Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"shortcut":"pingtest"}
+[2026-08-22T05:44:48.654Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":13073}
+[2026-08-22T05:44:48.656Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:45:27.237Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:45:27.239Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T05:45:27.253Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:45:27.255Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T05:45:27.794Z] [ERROR] queue: /help threw an error {"user":"reiduckk","error":"Unknown interaction","ms":539}
+[2026-08-22T05:45:27.855Z] [COMMAND] Command: /help by reiduckk - SUCCESS {"ms":616}
+[2026-08-22T05:45:27.856Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T05:45:28.186Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T05:46:16.313Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:46:16.315Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:46:16.342Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T05:46:16.343Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T05:46:16.866Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":551}
+[2026-08-22T05:46:17.333Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T05:46:18.137Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1794}
+[2026-08-22T05:46:18.142Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T06:43:44.879Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:43:44.881Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:43:44.882Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:44:54.717Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-22T06:44:54.719Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-22T06:44:54.910Z] [COMMAND] Command: /systeminfo by TestUser#0000 - SUCCESS {"section":"all"}
+[2026-08-22T06:45:05.227Z] [INFO] Loaded command: /cmd
+[2026-08-22T06:45:05.231Z] [INFO] Loaded command: /help
+[2026-08-22T06:45:05.233Z] [INFO] Loaded command: /logs
+[2026-08-22T06:45:05.235Z] [INFO] Loaded command: /note
+[2026-08-22T06:45:05.239Z] [INFO] Loaded command: /ping
+[2026-08-22T06:45:05.241Z] [INFO] Loaded command: /schedule
+[2026-08-22T06:45:05.242Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T06:45:05.243Z] [INFO] Loaded command: /task
+[2026-08-22T06:45:06.640Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T06:45:06.642Z] [INFO] Allowed commands: help, systeminfo, ipconfig
+[2026-08-22T06:45:06.643Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T06:45:38.625Z] [INFO] Loaded command: /cmd
+[2026-08-22T06:45:38.629Z] [INFO] Loaded command: /help
+[2026-08-22T06:45:38.630Z] [INFO] Loaded command: /logs
+[2026-08-22T06:45:38.632Z] [INFO] Loaded command: /note
+[2026-08-22T06:45:38.637Z] [INFO] Loaded command: /ping
+[2026-08-22T06:45:38.639Z] [INFO] Loaded command: /schedule
+[2026-08-22T06:45:38.641Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T06:45:38.642Z] [INFO] Loaded command: /task
+[2026-08-22T06:45:40.091Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T06:45:40.091Z] [INFO] Allowed commands: help, systeminfo, ipconfig
+[2026-08-22T06:45:40.092Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T06:45:49.158Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:45:49.160Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T06:45:49.191Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:45:49.199Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:45:49.203Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:45:49.207Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T06:45:49.724Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":517}
+[2026-08-22T06:45:49.815Z] [INFO] cmd: executing "ipconfig" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\ipconfig.exe"}
+[2026-08-22T06:45:50.214Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T06:45:50.380Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"shortcut":"ipconfig"}
+[2026-08-22T06:45:50.381Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1221}
+[2026-08-22T06:45:50.382Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T06:46:03.459Z] [INFO] queue: ✅ /systeminfo enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:46:03.460Z] [INFO] queue: ▶ executing /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:46:03.932Z] [ERROR] queue: /systeminfo threw an error {"user":"reiduckk","error":"Unknown interaction","ms":472}
+[2026-08-22T06:46:04.271Z] [INFO] queue: ✓ finished /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:46:13.061Z] [INFO] queue: ✅ /systeminfo enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:46:13.062Z] [INFO] queue: ▶ executing /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:46:14.246Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"section":"all"}
+[2026-08-22T06:46:14.247Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"ms":1185}
+[2026-08-22T06:46:14.248Z] [INFO] queue: ✓ finished /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:46:38.158Z] [INFO] queue: ✅ /systeminfo enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:46:38.158Z] [INFO] queue: ▶ executing /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:46:39.464Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"section":"all"}
+[2026-08-22T06:46:39.465Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"ms":1307}
+[2026-08-22T06:46:39.466Z] [INFO] queue: ✓ finished /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:54:28.284Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:54:28.286Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:54:28.287Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T06:55:45.506Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-22T06:55:45.507Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-22T06:55:45.605Z] [COMMAND] Command: /systeminfo by TestUser#0000 - SUCCESS {"section":"all"}
+[2026-08-22T06:55:54.969Z] [INFO] Loaded command: /cmd
+[2026-08-22T06:55:54.975Z] [INFO] Loaded command: /help
+[2026-08-22T06:55:54.977Z] [INFO] Loaded command: /logs
+[2026-08-22T06:55:54.978Z] [INFO] Loaded command: /note
+[2026-08-22T06:55:54.979Z] [INFO] Loaded command: /ping
+[2026-08-22T06:55:54.980Z] [INFO] Loaded command: /schedule
+[2026-08-22T06:55:54.981Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T06:55:54.983Z] [INFO] Loaded command: /task
+[2026-08-22T06:55:56.421Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T06:55:56.423Z] [INFO] Allowed commands: help, systeminfo, pingtest
+[2026-08-22T06:55:56.424Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T06:56:02.719Z] [INFO] queue: ✅ /systeminfo enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:56:02.720Z] [INFO] queue: ▶ executing /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:56:03.961Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"section":"all"}
+[2026-08-22T06:56:03.962Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"ms":1242}
+[2026-08-22T06:56:03.963Z] [INFO] queue: ✓ finished /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:56:13.971Z] [INFO] queue: ✅ /systeminfo enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:56:13.973Z] [INFO] queue: ▶ executing /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:56:15.193Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"section":"all"}
+[2026-08-22T06:56:15.194Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"ms":1221}
+[2026-08-22T06:56:15.195Z] [INFO] queue: ✓ finished /systeminfo {"user":"reiduckk"}
+[2026-08-22T06:56:21.434Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:56:21.435Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T06:56:21.948Z] [COMMAND] Command: /help by reiduckk - SUCCESS {"ms":513}
+[2026-08-22T06:56:21.949Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T06:56:45.153Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:56:45.153Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T06:56:45.895Z] [INFO] cmd: executing "pingtest" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\ping.exe"}
+[2026-08-22T06:56:45.957Z] [ERROR] cmd: "pingtest" failed {"user":"reiduckk","error":"Usage: ping [-t] [-a] [-n count] [-l size] [-f] [-i TTL] [-v TOS]\r\n            [-r count] [-s count] [[-j host-list] | [-k host-list]]\r\n            [-w timeout] [-R] [-S srcaddr] [-c compartment] [-p]\r\n            [-4] [-6] target_name\r\n\r\nOptions:\r\n    -t             Ping the specified host until st"}
+[2026-08-22T06:56:46.609Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1456}
+[2026-08-22T06:56:46.612Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T06:56:57.269Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:56:57.270Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T06:56:57.884Z] [INFO] cmd: executing "pingtest" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\ping.exe"}
+[2026-08-22T06:56:57.924Z] [ERROR] cmd: "pingtest" failed {"user":"reiduckk","error":"Usage: ping [-t] [-a] [-n count] [-l size] [-f] [-i TTL] [-v TOS]\r\n            [-r count] [-s count] [[-j host-list] | [-k host-list]]\r\n            [-w timeout] [-R] [-S srcaddr] [-c compartment] [-p]\r\n            [-4] [-6] target_name\r\n\r\nOptions:\r\n    -t             Ping the specified host until st"}
+[2026-08-22T06:56:58.466Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1196}
+[2026-08-22T06:56:58.467Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T06:57:12.424Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T06:57:12.426Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T06:57:13.084Z] [INFO] cmd: executing "pingtest" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\ping.exe"}
+[2026-08-22T06:57:13.134Z] [ERROR] cmd: "pingtest" failed {"user":"reiduckk","error":"Usage: ping [-t] [-a] [-n count] [-l size] [-f] [-i TTL] [-v TOS]\r\n            [-r count] [-s count] [[-j host-list] | [-k host-list]]\r\n            [-w timeout] [-R] [-S srcaddr] [-c compartment] [-p]\r\n            [-4] [-6] target_name\r\n\r\nOptions:\r\n    -t             Ping the specified host until st"}
+[2026-08-22T06:57:14.513Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":2087}
+[2026-08-22T06:57:14.513Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T07:12:34.299Z] [ERROR] storage.encryptedRead: key mismatch for "registry.enc" {"hint":"\"registry.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/registry.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T07:12:34.303Z] [ERROR] storage.encryptedRead: key mismatch for "settings.enc" {"hint":"\"settings.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/settings.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T07:12:34.305Z] [ERROR] storage.encryptedRead: key mismatch for "notes\notes.enc" {"hint":"\"notes\\notes.enc\" was encrypted with a different SETTINGS_KEY.\n  Fix: delete data/notes\\notes.enc and re-run setup, OR restore the original SETTINGS_KEY in .env."}
+[2026-08-22T07:14:05.242Z] [INFO] Initialized encrypted "settings.enc" with default data
+[2026-08-22T07:14:05.244Z] [INFO] Initialized encrypted "notes/notes.enc" with default data
+[2026-08-22T07:14:05.451Z] [COMMAND] Command: /systeminfo by TestUser#0000 - SUCCESS {"section":"all"}
+[2026-08-22T07:14:13.296Z] [INFO] Loaded command: /cmd
+[2026-08-22T07:14:13.302Z] [INFO] Loaded command: /help
+[2026-08-22T07:14:13.304Z] [INFO] Loaded command: /logs
+[2026-08-22T07:14:13.309Z] [INFO] Loaded command: /note
+[2026-08-22T07:14:13.315Z] [INFO] Loaded command: /ping
+[2026-08-22T07:14:13.317Z] [INFO] Loaded command: /schedule
+[2026-08-22T07:14:13.319Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T07:14:13.320Z] [INFO] Loaded command: /task
+[2026-08-22T07:14:14.915Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T07:14:14.916Z] [INFO] Allowed commands: help, systeminfo, dir
+[2026-08-22T07:14:14.918Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T07:14:29.147Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:14:29.151Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T07:14:29.964Z] [INFO] cmd: executing "dir" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\cmd.exe /c dir ."}
+[2026-08-22T07:14:30.682Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"shortcut":"dir"}
+[2026-08-22T07:14:30.683Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1532}
+[2026-08-22T07:14:30.685Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T07:15:08.363Z] [INFO] queue: ✅ /systeminfo enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:15:08.365Z] [INFO] queue: ▶ executing /systeminfo {"user":"reiduckk"}
+[2026-08-22T07:15:09.705Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"section":"disks"}
+[2026-08-22T07:15:09.709Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"ms":1344}
+[2026-08-22T07:15:09.711Z] [INFO] queue: ✓ finished /systeminfo {"user":"reiduckk"}
+[2026-08-22T07:15:23.307Z] [INFO] queue: ✅ /systeminfo enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:15:23.311Z] [INFO] queue: ▶ executing /systeminfo {"user":"reiduckk"}
+[2026-08-22T07:15:24.542Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"section":"all"}
+[2026-08-22T07:15:24.545Z] [COMMAND] Command: /systeminfo by reiduckk - SUCCESS {"ms":1234}
+[2026-08-22T07:15:24.549Z] [INFO] queue: ✓ finished /systeminfo {"user":"reiduckk"}
+[2026-08-22T07:15:42.867Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:15:42.869Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T07:15:43.703Z] [COMMAND] Command: /help by reiduckk - SUCCESS {"ms":834}
+[2026-08-22T07:15:43.705Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T07:16:22.251Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:16:22.253Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:16:22.267Z] [COMMAND] Command: /note add by reiduckk - SUCCESS {"nid":"N001","title":"hello"}
+[2026-08-22T07:16:22.826Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":573}
+[2026-08-22T07:16:22.828Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:16:44.937Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:16:44.943Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T07:16:45.598Z] [COMMAND] Command: /help by reiduckk - SUCCESS {"ms":655}
+[2026-08-22T07:16:45.602Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T07:35:30.150Z] [INFO] Loaded command: /cmd
+[2026-08-22T07:35:30.153Z] [INFO] Loaded command: /help
+[2026-08-22T07:35:30.157Z] [INFO] Loaded command: /logs
+[2026-08-22T07:35:30.164Z] [INFO] Loaded command: /note
+[2026-08-22T07:35:30.167Z] [INFO] Loaded command: /ping
+[2026-08-22T07:35:30.168Z] [INFO] Loaded command: /schedule
+[2026-08-22T07:35:30.170Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T07:35:30.172Z] [INFO] Loaded command: /task
+[2026-08-22T07:35:32.699Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T07:35:32.702Z] [INFO] Allowed commands: help, systeminfo, dir
+[2026-08-22T07:35:32.704Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T07:35:48.342Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:35:48.347Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T07:35:49.214Z] [COMMAND] Command: /help by reiduckk - SUCCESS {"ms":867}
+[2026-08-22T07:35:49.215Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T07:36:27.034Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:36:27.036Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:36:27.748Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":712}
+[2026-08-22T07:36:27.754Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:36:44.145Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:36:44.151Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:36:44.645Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":494}
+[2026-08-22T07:36:44.649Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:37:46.642Z] [INFO] Loaded command: /cmd
+[2026-08-22T07:37:46.650Z] [INFO] Loaded command: /help
+[2026-08-22T07:37:46.655Z] [INFO] Loaded command: /logs
+[2026-08-22T07:37:46.660Z] [INFO] Loaded command: /note
+[2026-08-22T07:37:46.661Z] [INFO] Loaded command: /ping
+[2026-08-22T07:37:46.662Z] [INFO] Loaded command: /schedule
+[2026-08-22T07:37:46.664Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T07:37:46.665Z] [INFO] Loaded command: /task
+[2026-08-22T07:37:48.242Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T07:37:48.243Z] [INFO] Allowed commands: help, systeminfo, dir
+[2026-08-22T07:37:48.244Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T07:38:18.152Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:38:18.154Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:38:18.855Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":701}
+[2026-08-22T07:38:18.861Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:53:57.621Z] [INFO] Loaded command: /cmd
+[2026-08-22T07:53:57.625Z] [INFO] Loaded command: /help
+[2026-08-22T07:53:57.627Z] [INFO] Loaded command: /logs
+[2026-08-22T07:53:57.631Z] [INFO] Loaded command: /note
+[2026-08-22T07:53:57.635Z] [INFO] Loaded command: /ping
+[2026-08-22T07:53:57.637Z] [INFO] Loaded command: /schedule
+[2026-08-22T07:53:57.638Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T07:53:57.640Z] [INFO] Loaded command: /task
+[2026-08-22T07:53:59.194Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T07:53:59.195Z] [INFO] Allowed commands: help, systeminfo, dir
+[2026-08-22T07:53:59.197Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T07:54:19.933Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:54:19.937Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:54:19.948Z] [COMMAND] Command: /note insert by reiduckk - SUCCESS {"nid":"N002","title":"my first note","action":"create"}
+[2026-08-22T07:54:20.646Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":709}
+[2026-08-22T07:54:20.647Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:54:33.984Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:54:33.987Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:54:33.994Z] [COMMAND] Command: /note insert by reiduckk - SUCCESS {"nid":"N002","action":"overwrite"}
+[2026-08-22T07:54:34.638Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":651}
+[2026-08-22T07:54:34.642Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:54:59.921Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:54:59.923Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:54:59.927Z] [COMMAND] Command: /note append by reiduckk - SUCCESS {"nid":"N002","lines":1}
+[2026-08-22T07:55:00.798Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":875}
+[2026-08-22T07:55:00.800Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:55:15.529Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:55:15.531Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:55:16.403Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":872}
+[2026-08-22T07:55:16.404Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:55:21.627Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:55:21.629Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:55:22.241Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":612}
+[2026-08-22T07:55:22.243Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:55:50.711Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:55:50.712Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:55:50.727Z] [COMMAND] Command: /note push by reiduckk - SUCCESS {"nid":"N003","title":"note-20260822-155550"}
+[2026-08-22T07:55:51.322Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":610}
+[2026-08-22T07:55:51.324Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:56:06.684Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:56:06.686Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:56:07.531Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":845}
+[2026-08-22T07:56:07.534Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:56:37.434Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:56:37.436Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:56:38.134Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":698}
+[2026-08-22T07:56:38.136Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:59:29.643Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:59:29.645Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:59:29.653Z] [COMMAND] Command: /note pop by reiduckk - SUCCESS {"nid":"N003","title":"note-20260822-155550"}
+[2026-08-22T07:59:30.410Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":765}
+[2026-08-22T07:59:30.412Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T07:59:42.915Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T07:59:42.918Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T07:59:43.668Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":750}
+[2026-08-22T07:59:43.670Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:09:42.288Z] [INFO] Loaded command: /cmd
+[2026-08-22T08:09:42.292Z] [INFO] Loaded command: /help
+[2026-08-22T08:09:42.295Z] [INFO] Loaded command: /logs
+[2026-08-22T08:09:42.301Z] [INFO] Loaded command: /note
+[2026-08-22T08:09:42.304Z] [INFO] Loaded command: /ping
+[2026-08-22T08:09:42.306Z] [INFO] Loaded command: /schedule
+[2026-08-22T08:09:42.307Z] [INFO] Loaded command: /systeminfo
+[2026-08-22T08:09:42.309Z] [INFO] Loaded command: /task
+[2026-08-22T08:09:43.992Z] [INFO] No error-log channel configured — errors logged to file only.
+[2026-08-22T08:09:43.994Z] [INFO] Allowed commands: help, systeminfo, dir
+[2026-08-22T08:09:43.996Z] [INFO] GitHub integration: disabled (GITHUB_MODE=none)
+[2026-08-22T08:09:49.760Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:09:49.762Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:09:49.789Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:09:49.794Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:09:50.391Z] [ERROR] note command error {"sub":"list","error":"Unknown interaction"}
+[2026-08-22T08:09:50.477Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":715}
+[2026-08-22T08:09:50.479Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:09:51.004Z] [ERROR] queue: /note threw an error {"user":"reiduckk","error":"Interaction has already been acknowledged.","ms":1210}
+[2026-08-22T08:09:51.361Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:09:58.277Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:09:58.277Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:09:58.279Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:09:58.279Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:09:58.805Z] [ERROR] note command error {"sub":"list","error":"Unknown interaction"}
+[2026-08-22T08:09:58.962Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":683}
+[2026-08-22T08:09:58.965Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:09:59.281Z] [ERROR] queue: /note threw an error {"user":"reiduckk","error":"Interaction has already been acknowledged.","ms":1002}
+[2026-08-22T08:09:59.665Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:10:09.399Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:10:09.401Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:10:09.403Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:10:09.403Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:10:09.952Z] [ERROR] note command error {"sub":"list","error":"Unknown interaction"}
+[2026-08-22T08:10:09.989Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":586}
+[2026-08-22T08:10:09.991Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:10:10.306Z] [ERROR] queue: /note threw an error {"user":"reiduckk","error":"Interaction has already been acknowledged.","ms":903}
+[2026-08-22T08:10:10.675Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:10:24.645Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:10:24.653Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:10:24.653Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:10:24.656Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:10:24.667Z] [COMMAND] Command: /note push by reiduckk - SUCCESS {"nid":"N4","title":"note-20260822-161024"}
+[2026-08-22T08:10:24.675Z] [COMMAND] Command: /note push by reiduckk - SUCCESS {"nid":"N005","title":"note-20260822-161024"}
+[2026-08-22T08:10:25.335Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":682}
+[2026-08-22T08:10:25.339Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:10:25.443Z] [ERROR] note command error {"sub":"push","error":"Interaction has already been acknowledged."}
+[2026-08-22T08:10:25.924Z] [ERROR] queue: /note threw an error {"user":"reiduckk","error":"Interaction has already been acknowledged.","ms":1268}
+[2026-08-22T08:10:26.247Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:10:37.006Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:10:37.009Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:10:37.010Z] [INFO] queue: ✅ /note enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:10:37.012Z] [INFO] queue: ▶ executing /note {"user":"reiduckk"}
+[2026-08-22T08:10:37.498Z] [ERROR] note command error {"sub":"list","error":"Unknown interaction"}
+[2026-08-22T08:10:37.611Z] [COMMAND] Command: /note by reiduckk - SUCCESS {"ms":599}
+[2026-08-22T08:10:37.614Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:10:37.966Z] [ERROR] queue: /note threw an error {"user":"reiduckk","error":"Interaction has already been acknowledged.","ms":957}
+[2026-08-22T08:10:38.415Z] [INFO] queue: ✓ finished /note {"user":"reiduckk"}
+[2026-08-22T08:11:53.019Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:11:53.021Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T08:11:53.024Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:11:53.026Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T08:11:53.430Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":409}
+[2026-08-22T08:11:53.586Z] [INFO] cmd: executing "dir" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\cmd.exe /c dir .."}
+[2026-08-22T08:11:53.950Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T08:11:54.434Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"shortcut":"dir"}
+[2026-08-22T08:11:54.438Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1412}
+[2026-08-22T08:11:54.440Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T08:12:14.171Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:12:14.173Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T08:12:14.183Z] [INFO] queue: ✅ /cmd enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:12:14.184Z] [INFO] queue: ▶ executing /cmd {"user":"reiduckk"}
+[2026-08-22T08:12:14.695Z] [ERROR] queue: /cmd threw an error {"user":"reiduckk","error":"Unknown interaction","ms":522}
+[2026-08-22T08:12:14.702Z] [INFO] cmd: executing "dir" {"user":"reiduckk","resolved":"C:\\Windows\\System32\\cmd.exe /c dir .."}
+[2026-08-22T08:12:15.151Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T08:12:15.491Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"shortcut":"dir"}
+[2026-08-22T08:12:15.492Z] [COMMAND] Command: /cmd by reiduckk - SUCCESS {"ms":1308}
+[2026-08-22T08:12:15.492Z] [INFO] queue: ✓ finished /cmd {"user":"reiduckk"}
+[2026-08-22T08:12:41.909Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:12:41.912Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T08:12:41.912Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:12:41.913Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T08:12:42.386Z] [ERROR] queue: /help threw an error {"user":"reiduckk","error":"Unknown interaction","ms":474}
+[2026-08-22T08:12:42.600Z] [COMMAND] Command: /help by reiduckk - SUCCESS {"ms":687}
+[2026-08-22T08:12:42.603Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T08:12:42.863Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T08:13:54.844Z] [INFO] queue: ✅ /task enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:13:54.846Z] [INFO] queue: ▶ executing /task {"user":"reiduckk"}
+[2026-08-22T08:13:54.854Z] [COMMAND] Command: /task add by reiduckk - SUCCESS {"tid":"T001","title":"Make a new definition"}
+[2026-08-22T08:13:54.856Z] [INFO] queue: ✅ /task enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:13:54.858Z] [INFO] queue: ▶ executing /task {"user":"reiduckk"}
+[2026-08-22T08:13:54.865Z] [COMMAND] Command: /task add by reiduckk - SUCCESS {"tid":"T002","title":"Make a new definition"}
+[2026-08-22T08:13:55.433Z] [ERROR] Task command error {"subcommand":"add","error":"Unknown interaction"}
+[2026-08-22T08:13:55.563Z] [COMMAND] Command: /task by reiduckk - SUCCESS {"ms":717}
+[2026-08-22T08:13:55.565Z] [INFO] queue: ✓ finished /task {"user":"reiduckk"}
+[2026-08-22T08:13:55.946Z] [ERROR] queue: /task threw an error {"user":"reiduckk","error":"Interaction has already been acknowledged.","ms":1088}
+[2026-08-22T08:13:56.337Z] [INFO] queue: ✓ finished /task {"user":"reiduckk"}
+[2026-08-22T08:14:10.196Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:14:10.199Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T08:14:10.212Z] [INFO] queue: ✅ /help enqueued {"user":"reiduckk","queued":false,"backlog":0}
+[2026-08-22T08:14:10.214Z] [INFO] queue: ▶ executing /help {"user":"reiduckk"}
+[2026-08-22T08:14:10.794Z] [ERROR] queue: /help threw an error {"user":"reiduckk","error":"Unknown interaction","ms":595}
+[2026-08-22T08:14:10.801Z] [COMMAND] Command: /help by reiduckk - SUCCESS {"ms":586}
+[2026-08-22T08:14:10.803Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}
+[2026-08-22T08:14:11.305Z] [INFO] queue: ✓ finished /help {"user":"reiduckk"}

@@ -208,20 +208,41 @@ function removeAllowedCommand(id) {
 
 /**
  * Quick check: is a given command name enabled in the registry?
- * If the registry is empty (not yet configured) ALL commands are allowed.
+ *
+ * The registry is an EXPLICIT DENY list, not an allowlist.
+ * A command with no entry passes through. Only enabled:false explicitly blocks.
+ *
+ * Rules (applied in order):
+ *   1. /help — always allowed, no registry check.
+ *   2. /cmd  — allowed whenever at least one enabled shell entry exists,
+ *              OR when the registry has no bot-type restrictions at all.
+ *   3. Registry is empty — no restrictions configured, everything allowed.
+ *   4. Entry exists with enabled === false — explicitly blocked.
+ *   5. Entry exists with enabled !== false — allowed.
+ *   6. Entry is MISSING — allowed. A missing entry means the owner hasn't
+ *      explicitly denied this command, so it passes through.
  *
  * @param {string} name
  * @returns {boolean}
  */
 function isCommandAllowed(name) {
-  if (name === 'help') return true; // /help is always on
+  // Rule 1 — /help is unconditionally on
+  if (name === 'help') return true;
 
   const list = listAllowedCommands();
-  if (list.length === 0) return true; // no restrictions configured
 
+  // Rule 3 — empty registry means no restrictions at all
+  if (list.length === 0) return true;
+
+  // Rule 2 — /cmd passes whenever any enabled shell entry exists
+  if (name === 'cmd') {
+    return list.some(r => r.type === 'shell' && r.enabled !== false);
+  }
+
+  // Rules 4, 5, 6 — explicit deny wins; missing entry = allowed
   const entry = list.find(r => r.name === name || r.id === name);
-  if (!entry) return false; // explicitly not in list → blocked
-  return entry.enabled !== false;
+  if (!entry) return true;          // Rule 6: not in list → allowed (explicit deny list)
+  return entry.enabled !== false;   // Rule 4/5: respect explicit enabled flag
 }
 
 // ─── LogSources ──────────────────────────────────────────────────────────────

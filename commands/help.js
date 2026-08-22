@@ -97,16 +97,18 @@ const STATIC_CATALOGUE = {
   },
   note: {
     icon:        '📝',
-    description: 'Manage personal notes',
+    description: 'Create and manage personal notes (each note has a unique ID)',
     subcommands: [
-      '`add <title>`                    — create a note',
-      '`list`                           — list all notes',
-      '`search <keyword>`               — search by keyword',
-      '`remove <title>`                 — delete a note',
-      '`push <sentence>`                — append a line',
-      "`push '<line>\\n<line>'`         — append multiple lines",
-      '`pop`                            — remove the last line',
-      '`export <title>`                 — export as file attachment'
+      '`insert <title> [content]`  — create a note; overwrites if title already exists',
+      '`append <title> [content]`  — append to existing note, or create if not found',
+      '`read   <title | id>`       — display a note',
+      '`update <title | id>`       — rename or replace content',
+      '`list`                      — list all notes with ID + preview',
+      '`search <keyword>`          — search titles and content',
+      '`remove <title | id>`       — delete a specific note',
+      '`push   [content]`          — push a new note entry with an auto-generated title',
+      '`pop`                       — delete the last note entry in the list',
+      '`export <title | id>`       — export as .txt attachment'
     ]
   },
   deploy: {
@@ -123,31 +125,35 @@ const STATIC_CATALOGUE = {
       '`staging=<branch>`              — set staging branch'
     ]
   },
-  status: {
+  systeminfo: {
     icon:        '📊',
-    description: 'Show system resource information',
+    description: 'Show disk, CPU/memory, and network information in one command',
     subcommands: [
-      '`disks`     — disk usage',
-      '`resources` — CPU and memory',
-      '`network`   — network interfaces'
+      '`(no option)`           — show all: disks + CPU/memory + network',
+      '`section:disks`         — disk usage only',
+      '`section:resources`     — CPU & memory only',
+      '`section:network`       — network interfaces only'
     ]
   },
-  disks: {
-    icon:        '💾',
-    description: 'Show disk usage on this host',
-    subcommands: []
-  },
-  resources: {
-    icon:        '⚙️',
-    description: 'Show CPU and memory usage on this host',
+  ping: {
+    icon:        '🏓',
+    description: 'Check bot latency and responsiveness',
     subcommands: []
   },
   cmd: {
     icon:        '⚡',
     description: 'Run an owner-approved command on this host',
     subcommands: [
-      '`<shortcut>`                  — choose from registered commands',
-      'Shortcuts and parameters are configured in setup.js'
+      '`shortcut`                  — choose from registered shell commands',
+      '`{param}`                   — fill in any placeholder values',
+      '',
+      '**Registering commands in setup (Step 5):**',
+      '`<shortcut> <filepath> [args]`',
+      '  • `pingtest C:\\ping.exe {hostname}`',
+      '  • `dir C:\\Windows\\System32\\cmd.exe "/c dir {path}"`',
+      '  • `build ./scripts/build.sh {branch}`',
+      '',
+      'After adding commands run `npm run deploy` to update Discord.'
     ]
   }
 };
