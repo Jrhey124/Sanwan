@@ -1,422 +1,165 @@
-# Sanwan Bot - Setup & Deployment Guide
+﻿# Sanwan Setup Guide
 
-A Discord ChatOps bot for task management, scheduling, and DevOps automation with file-based storage.
+Sanwan is a Discord ChatOps bot for task tracking, encrypted notes, cron scheduling of registered shell shortcuts, log viewing, system information, and optional GitHub notifications.
 
-## 🚀 Quick Start
+## Requirements
 
-### Prerequisites
+- Node.js 18.17 or newer
+- A Discord application with a bot token
+- A Discord server where you can install the bot
 
-- Node.js 16.x or higher
-- Discord Bot Token ([Get one here](https://discord.com/developers/applications))
-- npm or yarn package manager
+## Install and configure
 
-### Installation
+```bash
+npm ci
+npm run setup
+```
 
-1. **Clone or navigate to the repository**
-   ```bash
-   cd Sanwan
-   ```
+The setup wizard collects credentials, initializes data files, configures shortcut and role registries, and can create OS service artifacts. It can also deploy the slash commands if Discord credentials are present. You can copy `.env.example` to `.env` and configure it manually.
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Run setup wizard**
-   ```bash
-   npm run setup
-   ```
-   
-   The setup wizard will:
-   - Create/update `.env` file with required credentials
-   - Initialize data directories and schemas
-   - Configure daemon service (optional)
-   - Setup error logging to Discord channel
-   - Discover and validate available commands
-
-4. **Deploy slash commands to Discord**
-   ```bash
-   npm run deploy
-   ```
-
-5. **Test the setup**
-   ```bash
-   npm run test
-   ```
-
-6. **Start the bot**
-   ```bash
-   npm start
-   ```
-
-## 📋 Configuration
-
-### Environment Variables (.env)
+Required for live Discord operation:
 
 ```env
-# Discord Configuration (Required)
-DISCORD_TOKEN=your_bot_token_here
+DISCORD_TOKEN=your_bot_token
 CLIENT_ID=your_application_id
 GUILD_ID=your_server_id
-
-# AI Configuration (Optional)
-AI_PROVIDER=openai
-AI_TOKEN=your_ai_api_key
-AI_MODEL=gpt-4
-
-# Storage Configuration
-SETTINGS_KEY=auto_generated_encryption_key
-SETTINGS_PATH=./data/settings.json
+SETTINGS_KEY=64_hex_characters
 ```
 
-### Getting Discord Credentials
+Use a randomly generated 32-byte key encoded as 64 hexadecimal characters. Keep it backed up and private; encrypted settings and notes cannot be recovered without it. The bot uses the Discord `Guilds` intent and does not require privileged gateway intents.
 
-1. **Create Discord Application**
-   - Go to [Discord Developer Portal](https://discord.com/developers/applications)
-   - Click "New Application"
-   - Give it a name (e.g., "Sanwan Bot")
+Invite the bot with the `bot` and `applications.commands` OAuth scopes. It needs permission to view channels, send messages, embed links, attach files, and use application commands in the channels where it operates.
 
-2. **Get Client ID**
-   - Go to "General Information"
-   - Copy "Application ID" → This is your `CLIENT_ID`
+## Run
 
-3. **Create Bot & Get Token**
-   - Go to "Bot" section
-   - Click "Add Bot"
-   - Under "Token", click "Reset Token" and copy it → This is your `DISCORD_TOKEN`
-   - Enable these Privileged Gateway Intents:
-     - ✅ Presence Intent
-     - ✅ Server Members Intent
-     - ✅ Message Content Intent
-
-4. **Get Guild ID (Server ID)**
-   - In Discord, enable Developer Mode (Settings → Advanced → Developer Mode)
-   - Right-click your server → Copy ID → This is your `GUILD_ID`
-
-5. **Invite Bot to Server**
-   - Go to "OAuth2" → "URL Generator"
-   - Select scopes: `bot`, `applications.commands`
-   - Select bot permissions:
-     - Read Messages/View Channels
-     - Send Messages
-     - Send Messages in Threads
-     - Embed Links
-     - Attach Files
-     - Read Message History
-     - Use Slash Commands
-   - Copy generated URL and open in browser to invite bot
-
-## 🤖 Running the Bot
-
-### Standard Mode
 ```bash
-npm start
-```
-
-### Daemon Mode (Background Service)
-```bash
-npm run daemon
-```
-
-The daemon runs scheduled tasks and reminders in the background.
-
-### Development Mode
-```bash
-node sanwan.js
-```
-
-## 🧪 Testing
-
-Run the comprehensive test suite:
-```bash
-npm run test
-```
-
-Tests validate:
-- ✅ Environment configuration
-- ✅ Directory structure
-- ✅ Data file integrity
-- ✅ Command loading
-- ✅ Log file accessibility
-- ✅ Daemon configuration
-- ✅ Dependencies
-
-## 📁 Project Structure
-
-```
-Sanwan/
-├── commands/           # Discord slash commands
-│   ├── help.js         # Command reference
-│   ├── task.js         # Task management
-│   ├── logs.js         # Log viewing
-│   ├── disks.js        # Disk status
-│   └── resources.js    # Resource monitoring
-├── utils/              # Utility modules
-│   ├── logger.js       # Logging system
-│   └── storage.js      # File-based storage
-├── data/               # Data storage (created on setup)
-│   ├── tasks/          # Task storage
-│   ├── schedules/      # Schedule storage
-│   ├── notes/          # Note storage
-│   ├── logs/           # Log files
-│   └── schemas/        # Data schema documentation
-├── sanwan.js           # Main bot entry point
-├── setup.js            # Setup wizard
-├── test.js             # Test suite
-├── daemon.js           # Background daemon service
-├── deploy-commands.js  # Command deployment script
-├── package.json        # Dependencies
-└── .env                # Configuration (created by setup)
-```
-
-## 📝 Available Commands
-
-### Task Management (`/task`)
-```
-/task add <title> [assignee] [deadline]  - Create new task
-/task list [filter]                      - List all tasks
-/task update <tid> <field> <value>       - Update task
-/task describe <tid> <description>       - Add description
-/task remove <tid>                       - Delete task
-/task due <days>                         - Show tasks due in N days
-/task link <tid> <issue#>                - Link to GitHub issue
-/task sync                               - Sync with issue tracker
-```
-
-### Scheduling (`/schedule`)
-```
-/schedule set <name> <cron>              - Create scheduled job
-/schedule list                           - List all schedules
-/schedule history                        - View execution history
-```
-
-### Notes (`/note`)
-```
-/note add <title>                        - Create new note
-/note list                               - List all notes
-/note search <keyword>                   - Search notes
-/note remove <title>                     - Delete note
-/note push <sentence>                    - Add line to note
-/note pop                                - Remove last line
-/note export <title>                     - Export note
-```
-
-### AI Assistant (`/ask`)
-```
-/ask <question>                          - Ask AI a question
-/ask model list                          - List AI models
-/ask config                              - Show AI config
-/ask switch <model>                      - Switch AI model
-```
-
-### Deployment (`/deploy`)
-```
-/deploy start <service>                  - Start service
-/deploy stop <service>                   - Stop service
-/deploy restart <service>                - Restart service
-/deploy status <service>                 - Check status
-/deploy rollback <commit>                - Rollback deployment
-/deploy simulate                         - Simulate deployment
-```
-
-### System Status (`/status`)
-```
-/status disks                            - Show disk usage
-/status resources                        - Show CPU/memory
-/status network                          - Show network info
-```
-
-### Logs (`/logs`)
-```
-/logs view <file> [lines]                - View log file
-/logs list                               - List log files
-```
-
-### Help (`/help`)
-```
-/help                                    - Show all commands
-/help <command>                          - Get command help
-```
-
-## 🔧 Adding New Commands
-
-1. **Create command file** in `commands/` directory:
-
-```javascript
-// commands/mycommand.js
-const { SlashCommandBuilder } = require('discord.js');
-const logger = require('../utils/logger');
-
-module.exports = {
-  name: 'mycommand',
-  description: 'Description of my command',
-  data: new SlashCommandBuilder()
-    .setName('mycommand')
-    .setDescription('Description of my command')
-    .addStringOption(option =>
-      option.setName('param')
-        .setDescription('Parameter description')
-        .setRequired(true)
-    ),
-
-  async run(interaction) {
-    try {
-      const param = interaction.options.getString('param');
-      
-      // Your command logic here
-      
-      await interaction.reply(`Result: ${param}`);
-      logger.command('mycommand', interaction.user.tag, true);
-    } catch (error) {
-      logger.error('Command error', { command: 'mycommand', error: error.message });
-      await interaction.reply({ content: '❌ Error occurred', ephemeral: true });
-    }
-  }
-};
-```
-
-2. **Deploy the new command**:
-```bash
+npm test
 npm run deploy
-```
-
-3. **Restart the bot**:
-```bash
 npm start
 ```
 
-## 🔄 Daemon Service
+Run `npm run daemon` in a separate process to activate schedules and deadline reminders. Structured state is stored in `data/sanwan.sqlite`; logs and backups remain filesystem-based. Run `npm run webhook` only when operating the GitHub webhook listener as a separate process.
 
-The daemon service runs scheduled tasks and checks for task reminders.
+## Slash commands
 
-### Starting the Daemon
+- `/help` — list commands or show command help.
+- `/ping` — inspect Discord round-trip and websocket latency.
+- `/task` — add, list, update, describe, remove, link, and view tasks due within a date range. `/task sync` is currently a placeholder and does not sync with an issue tracker.
+- `/note` — insert, append, read, update, list, search, remove, push/pop content, and export notes.
+- `/schedule` — create, list, view history, toggle, and remove schedules.
+- `/cmd` — execute a registered shell shortcut.
+- `/logs` — list and view the bot's log files.
+- `/systeminfo` — show disk, CPU/memory, and network information.
+
+Use `/help <command>` in Discord for the live option names and descriptions.
+
+## Registered shell shortcuts and schedules
+
+Shortcuts are configured through the setup wizard and saved in the encrypted command registry. A shortcut has an ID, executable, fixed arguments, and optional named placeholders. `/cmd` and scheduled jobs execute these entries with argument-based process spawning, without an implicit shell. Only enabled registered shell entries can run. Register commands that are trusted by the bot owner.
+
+Create a schedule with a five-field cron expression. The command field contains the shortcut ID and, optionally, a JSON object of placeholder values. For example:
+
+```text
+shortcut ID: backup
+placeholder: target
+schedule command: /cmd backup {"target":"daily"}
+cron: 0 2 * * *
+```
+
+The daemon must be running, and it must be restarted after schedule changes.
+
+## Optional GitHub integration
+
+Set `GITHUB_MODE` to one of `none`, `polling`, `polling_pat`, or `webhook`.
+
+- `polling` watches a public repository. Set `GITHUB_REPO=owner/repo`. Polling has a 120-second minimum interval for unauthenticated requests.
+- `polling_pat` can access private repositories. Set `GITHUB_PAT` and `GITHUB_REPO`.
+- `webhook` starts a signed webhook receiver. Set `GITHUB_WEBHOOK_SECRET`; the server refuses to start without it. Configure the same secret in the GitHub repository webhook settings.
+
+Polling starts with the bot. In webhook mode, `npm start` starts the receiver in the bot process; `npm run webhook` runs a separate receiver that logs incoming events.
+
+## Data and logs
+
+- Plain task and schedule records are in `data/tasks/` and `data/schedules/`.
+- Settings, notes, permissions, and shortcut registries are encrypted under `data/`.
+- Logs are stored in `data/logs/`.
+- Backups are stored in `data/backups/`.
+
+The data directory is local to the installation. Back it up regularly and preserve the encryption key. Do not commit `.env`, operational records, or encrypted runtime files to a shared repository.
+
+## Tests and diagnostics
 
 ```bash
-npm run daemon
+npm test
+npm run test:diagnostics
 ```
 
-### Daemon Features
+`npm test` runs the automated logic suite without connecting to Discord or GitHub. `npm run test:diagnostics` checks configuration, runtime files, command modules, and setup wiring; it may warn about missing credentials before configuration. The setup wizard runs both after initialization.
 
-- **Scheduled Jobs**: Executes commands based on cron expressions
-- **Task Reminders**: Notifies about upcoming task deadlines
-- **Discord Notifications**: Sends execution status to configured channels
-- **Execution History**: Tracks all scheduled task runs
+Live login, command deployment, role permissions, GitHub delivery, and notification channels still require valid credentials and should be checked in a test Discord server.
 
-### Cron Expression Examples
+## Troubleshooting
 
-```
-0 2 * * *      → Daily at 2:00 AM
-*/15 * * * *   → Every 15 minutes
-0 9 * * 1      → Every Monday at 9:00 AM
-0 0 1 * *      → First day of month at midnight
-0 */6 * * *    → Every 6 hours
-```
+- Run `npm test` to check core behavior.
+- Run `npm run test:diagnostics` after setup to inspect local configuration.
+- If slash commands are missing, verify the application and guild IDs, then run `npm run deploy` again.
+- If encrypted files cannot be read, restore the original `SETTINGS_KEY`.
+- Review `data/logs/errors.log` for runtime errors.
+# Docker is the supported production deployment
 
-Use [crontab.guru](https://crontab.guru) to create cron expressions.
+The self-hosted deployment uses Node 22 inside Docker. Run the bot and its
+scheduler as separate Compose services so restarts and dependency versions are
+repeatable. Runtime data is stored in the persistent `sanwan-data` volume and
+encrypted before it is written to SQLite.
+# Required credentials
 
-## 📊 Logging
+Create a local `.env` file from `.env.example` and fill in the following values.
+Never commit `.env` or paste these secrets into source files.
 
-All operations are logged to files in `data/logs/`:
+## Discord credentials
 
-- `bot.log` - General bot activity
-- `errors.log` - Error tracking
-- `commands.log` - Command execution history
-- `daemon.log` - Daemon service activity
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications)
+   and select **New Application** (or open an existing application).
+2. On **General Information**, copy **Application ID** into `CLIENT_ID`.
+3. Open **Bot**, click **Add Bot** if needed, then use **Reset Token** and copy
+   the token into `DISCORD_TOKEN`. Discord only shows the full token when it is
+   generated, so store it in `.env` immediately.
+4. Invite the bot to your test server using the OAuth2 URL generator with the
+   `bot` and `applications.commands` scopes. Enable only the permissions the
+   bot needs.
+5. In Discord, enable **Developer Mode** under **User Settings → Advanced**.
+   Right-click your test server and choose **Copy Server ID**. Put that value in
+   `GUILD_ID`.
 
-### Viewing Logs
+Example:
 
-**Via Discord:**
-```
-/logs view bot.log 100
-```
-
-**Via Terminal:**
-```bash
-tail -f data/logs/bot.log
-```
-
-## 🗄️ Data Storage
-
-Sanwan uses **file-based JSON storage** for simplicity and portability.
-
-### Storage Locations
-
-- `data/tasks/tasks.json` - Task storage
-- `data/schedules/schedules.json` - Schedule storage
-- `data/notes/notes.json` - Note storage
-- `data/settings.json` - Global settings
-
-### Backup
-
-Backups are automatically created in `data/backups/` when using storage operations.
-
-**Manual backup:**
-```bash
-cp -r data/ data-backup-$(date +%Y%m%d)/
+```env
+DISCORD_TOKEN=replace-with-your-bot-token
+CLIENT_ID=replace-with-your-application-id
+GUILD_ID=replace-with-your-test-server-id
 ```
 
-## 🚨 Error Handling
+## GitHub credentials (optional)
 
-Errors are automatically:
-1. Logged to `data/logs/errors.log`
-2. Sent to configured Discord error channel
-3. Returned to user if command-related
+For polling, create a fine-grained GitHub token with read access to the target
+repository, then set `GITHUB_MODE=polling_pat`, `GITHUB_PAT`, and `GITHUB_REPO`.
+For webhooks, create a random shared secret, set `GITHUB_MODE=webhook` and
+`GITHUB_WEBHOOK_SECRET`, then configure the same secret in the GitHub repository
+under **Settings → Webhooks**.
 
-Configure error channel in setup or manually:
-```json
-// data/settings.json
-{
-  "bot": {
-    "errorChannel": "YOUR_CHANNEL_ID"
-  }
-}
+## Validate the configuration
+
+Run the focused logic tests first:
+
+```powershell
+npm.cmd test
 ```
 
-## 🔒 Security Best Practices
+Then run the environment and integration diagnostics:
 
-1. **Never commit `.env` file** - It contains sensitive tokens
-2. **Restrict bot permissions** - Only enable required permissions
-3. **Use environment variables** - Don't hardcode credentials
-4. **Regular backups** - Backup `data/` directory regularly
-5. **Monitor logs** - Check error logs frequently
-6. **Rotate tokens** - Regenerate tokens if compromised
+```powershell
+npm.cmd run test:diagnostics
+```
 
-## 🐛 Troubleshooting
-
-### Bot won't start
-- Check `.env` file exists and has valid tokens
-- Verify Discord token is not expired
-- Run `npm run test` to diagnose issues
-
-### Commands not showing in Discord
-- Run `npm run deploy` to register commands
-- Wait a few minutes for Discord to propagate
-- Check bot has `applications.commands` scope
-
-### Permission errors
-- Verify bot role is above other roles (Discord settings)
-- Check bot has required channel permissions
-- Ensure Privileged Gateway Intents are enabled
-
-### Data not persisting
-- Check `data/` directory permissions
-- Verify disk space is available
-- Review `errors.log` for storage errors
-
-## 📚 Additional Resources
-
-- [Discord.js Documentation](https://discord.js.org/)
-- [Discord Developer Portal](https://discord.com/developers/docs)
-- [Cron Expression Guide](https://crontab.guru/)
-- [Node.js Documentation](https://nodejs.org/docs/)
-
-## 🤝 Support
-
-For issues and questions:
-1. Check logs in `data/logs/`
-2. Run `npm run test` to diagnose
-3. Review error messages in Discord (if error channel configured)
-
-## 📄 License
-
-MIT License - See LICENSE file for details
+Missing `DISCORD_TOKEN`, `CLIENT_ID`, or `GUILD_ID` will appear as diagnostic
+failures until the values are configured.

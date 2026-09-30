@@ -7,7 +7,7 @@
  *  0.  .env overwrite-or-update guard
  *  1.  Detect and report host OS
  *  2.  Create required data directories
- *  3.  Build / update .env  (Discord, AI, encryption key, GitHub webhook)
+ *  3.  Build / update .env  (Discord, encryption key, GitHub integration)
  *  4.  Discover available /cmd command files
  *  5.  Allowed-commands registry  (add / remove / update per record)
  *  5b. Role-based permissions     (per-command Discord role mapping)
@@ -37,6 +37,8 @@ const os       = require('os');
 
 const { generateKey }              = require('./utils/crypto');
 const { detectPlatform, serviceInstall } = require('./utils/os-service');
+const { resolveGitHubMode } = require('./utils/github-config');
+const { getPollInterval } = require('./utils/polling-config');
 
 // ─── Terminal colours ─────────────────────────────────────────────────────────
 
@@ -118,8 +120,8 @@ function writeEnvFile(vars) {
  *   3. Remove a leading "./"      → whatever remains (e.g. "settings.enc")
  *   4. Return as-is               (already a bare filename)
  */
-function settingsStorageKey() {
-  const raw = process.env.SETTINGS_PATH || './data/settings.enc';
+function settingsStorageKeyLegacy() {
+  const raw = './data/settings.enc';
   return raw
     .replace(/^\.\/data\//, '')   // ./data/settings.enc → settings.enc
     .replace(/^data\//, '')       // data/settings.enc  → settings.enc
@@ -231,25 +233,6 @@ async function step3BuildEnv(mode) {
   vars.CLIENT_ID     = await askVar('CLIENT_ID',     'Application / Client ID');
   vars.GUILD_ID      = await askVar('GUILD_ID',      'Server (Guild) ID');
 
-  // AI ───────────────────────────────────────────────────────────────────────
-  const hasAI = !!(existing.AI_PROVIDER || existing.AI_TOKEN || existing.AI_MODEL);
-  const setupAI = await confirm(
-    `\n  Configure AI provider?${hasAI ? ' (already configured)' : ''}`,
-    hasAI
-  );
-  if (setupAI) {
-    print('  AI provider:', 'cyan');
-    vars.AI_PROVIDER = await askVar('AI_PROVIDER', 'Provider: openai / anthropic / ollama');
-    vars.AI_TOKEN    = await askVar('AI_TOKEN',    'API token (blank for ollama)');
-    vars.AI_MODEL    = await askVar('AI_MODEL',    'Model e.g. gpt-4 / claude-3-opus / llama3');
-  } else {
-    print('  · AI provider skipped.', 'dim');
-    // Preserve any existing values unchanged
-    vars.AI_PROVIDER = existing.AI_PROVIDER || '';
-    vars.AI_TOKEN    = existing.AI_TOKEN    || '';
-    vars.AI_MODEL    = existing.AI_MODEL    || '';
-  }
-
   // Encryption key ───────────────────────────────────────────────────────────
   print('\n  Encryption key:', 'cyan');
   let settingsKey = await askVar('SETTINGS_KEY', '64-hex key (auto-generated if blank)');
@@ -258,7 +241,7 @@ async function step3BuildEnv(mode) {
     print(`  ✓ Generated SETTINGS_KEY: ${settingsKey.slice(0, 20)}…`, 'green');
   }
   vars.SETTINGS_KEY  = settingsKey;
-  vars.SETTINGS_PATH = await askVar('SETTINGS_PATH', 'Settings file path', './data/settings.enc');
+  // Structured settings are stored in SQLite; no settings file path is configured.
 
   // ─── GitHub integration ────────────────────────────────────────────────────
   //
@@ -280,7 +263,7 @@ async function step3BuildEnv(mode) {
     vars.GITHUB_MODE           = existing.GITHUB_MODE           || 'none';
     vars.GITHUB_REPO           = existing.GITHUB_REPO           || '';
     vars.GITHUB_PAT            = existing.GITHUB_PAT            || '';
-    vars.GITHUB_POLL_INTERVAL  = existing.GITHUB_POLL_INTERVAL  || '60000';
+    vars.GITHUB_POLL_INTERVAL  = existing.GITHUB_POLL_INTERVAL  || '120000';
     vars.GITHUB_WEBHOOK_SECRET = existing.GITHUB_WEBHOOK_SECRET || '';
     vars.GITHUB_WEBHOOK_PORT   = existing.GITHUB_WEBHOOK_PORT   || '3000';
     vars.GITHUB_WEBHOOK_PATH   = existing.GITHUB_WEBHOOK_PATH   || '/webhook';
@@ -297,24 +280,17 @@ async function step3BuildEnv(mode) {
 
     const modeChoice = await ask('  Mode [1/2]: ');
 
-    let githubMode;
-    if (modeChoice === '2') {
-      githubMode = 'webhook';
-    } else if (modeChoice === '1' || modeChoice === '') {
-      githubMode = 'polling';
-    } else {
-      githubMode = currentMode !== 'none' ? currentMode : 'polling';
-    }
+    const githubMode = resolveGitHubMode(modeChoice, currentMode);
 
     vars.GITHUB_MODE = githubMode;
 
     // ── Polling ──────────────────────────────────────────────────────────────
-    if (githubMode === 'polling') {
+    if (githubMode === 'polling' || githubMode === 'polling_pat') {
       vars.GITHUB_REPO = await askVar(
         'GITHUB_REPO', 'Repository  (e.g. owner/repo)', existing.GITHUB_REPO || ''
       );
       vars.GITHUB_POLL_INTERVAL = await askVar(
-        'GITHUB_POLL_INTERVAL', 'Poll interval in milliseconds', existing.GITHUB_POLL_INTERVAL || '60000'
+        'GITHUB_POLL_INTERVAL', 'Poll interval in milliseconds (public polling minimum: 120000)', existing.GITHUB_POLL_INTERVAL || '120000'
       );
 
       print('');
@@ -343,9 +319,13 @@ async function step3BuildEnv(mode) {
       vars.GITHUB_WEBHOOK_PORT = await ask('  > ') || existing.GITHUB_WEBHOOK_PORT || '3000';
 
       print('');
-      print('  Enter webhook secret (optional but recommended):', 'cyan');
-      hint('Webhook requests will be verified with HMAC-SHA256 if secret is set.');
+      print('  Enter required webhook secret:', 'cyan');
+      hint('The webhook server requires this secret to verify GitHub signatures with HMAC-SHA256.');
       vars.GITHUB_WEBHOOK_SECRET = await ask('  > ') || existing.GITHUB_WEBHOOK_SECRET || '';
+      while (!vars.GITHUB_WEBHOOK_SECRET) {
+        print('  A webhook secret is required.', 'yellow');
+        vars.GITHUB_WEBHOOK_SECRET = await ask('  Secret: ');
+      }
 
       vars.GITHUB_WEBHOOK_PATH = await askVar(
         'GITHUB_WEBHOOK_PATH', 'URL path', existing.GITHUB_WEBHOOK_PATH || '/webhook'
@@ -356,13 +336,9 @@ async function step3BuildEnv(mode) {
 
       // Clear polling vars
       vars.GITHUB_PAT           = existing.GITHUB_PAT           || '';
-      vars.GITHUB_POLL_INTERVAL = existing.GITHUB_POLL_INTERVAL || '60000';
+      vars.GITHUB_POLL_INTERVAL = existing.GITHUB_POLL_INTERVAL || '120000';
 
-      if (!vars.GITHUB_WEBHOOK_SECRET) {
-        print('  ⚠ No secret set — incoming payloads will NOT be signature-verified.', 'yellow');
-      } else {
-        print('  ✓ Webhook HMAC-SHA256 secret configured.', 'green');
-      }
+      print('  ✓ Webhook HMAC-SHA256 secret configured.', 'green');
 
       print(`\n  ✓ Webhook configured: port ${vars.GITHUB_WEBHOOK_PORT}, path ${vars.GITHUB_WEBHOOK_PATH}`, 'green');
       print('    Register this payload URL in GitHub repo → Settings → Webhooks:');
@@ -396,7 +372,7 @@ async function step3bCheckStaleEncFiles() {
   const encFiles = [
     'registry.enc',
     'settings.enc',
-    path.join('notes', 'notes.enc')
+    path.join('notes', 'notes.enc') // legacy migration source
   ];
 
   const stale = [];
@@ -822,7 +798,7 @@ async function step6ErrorLog() {
   hint('Errors will be posted to this Discord channel as embeds.');
 
   const storage = require('./utils/storage');
-  const file    = settingsStorageKey();
+  const file    = 'settings.enc';
 
   let current = null;
   if (process.env.SETTINGS_KEY) {
@@ -933,10 +909,10 @@ async function step7LogSources() {
 // Prompt: "Add or manage a service? [Y/n]"
 // Options in a loop: [a]dd / [r]emove / [u]pdate / [l]ist / [d]one
 // Each add collects all fields in one block (blank = optional / skip).
-// Used by both /schedule and /deploy.
+// Records are stored for reference; no /deploy slash command currently consumes them.
 
 async function step7bDeployServices() {
-  section('Step 7b — Services  (/deploy and /schedule)');
+  section('Step 7b — Stored Service Entries (not executed by a slash command)');
 
   if (!process.env.SETTINGS_KEY) {
     print('  ⚠ SETTINGS_KEY not set — skipping.', 'yellow');
@@ -1080,7 +1056,7 @@ function step8GitHubWebhook(envVars) {
     print(`  Mode   : webhook`, 'green');
     print(`  Port   : ${port}`);
     print(`  Path   : ${wpath}`);
-    print(`  Secret : ${secret ? '✓ set' : '⚠ not set (no signature verification)'}`,
+    print(`  Secret : ${secret ? '✓ set' : '⚠ not set (webhook server will refuse to start)'}`,
           secret ? 'green' : 'yellow');
     print('');
     print('  Payload URL to register in GitHub repo → Settings → Webhooks:');
@@ -1091,8 +1067,8 @@ function step8GitHubWebhook(envVars) {
   } else {
     // polling or polling_pat
     const repo     = envVars.GITHUB_REPO || '(not set)';
-    const interval = Number(envVars.GITHUB_POLL_INTERVAL || 60000) / 1000;
     const hasPAT   = !!(envVars.GITHUB_PAT);
+    const interval = getPollInterval(envVars.GITHUB_POLL_INTERVAL, hasPAT) / 1000;
 
     print(`  Mode     : ${mode}`, 'green');
     print(`  Repo     : ${repo}`);
@@ -1141,7 +1117,7 @@ function step10EncryptedFiles() {
   }
 
   const storage = require('./utils/storage');
-  const file    = settingsStorageKey();
+  const file    = 'settings.enc';
 
   storage.initializeEncryptedIfMissing(file, {
     bot: { name: 'Sanwan', version: '1.0.0', errorChannel: null, allowedCommands: [] },
@@ -1152,8 +1128,8 @@ function step10EncryptedFiles() {
   });
   print(`  ✓ ${file}`, 'green');
 
-  storage.initializeEncryptedIfMissing('notes/notes.enc', { notes: [], nextId: 1 });
-  print('  ✓ notes/notes.enc', 'green');
+  storage.initializeIfMissing('notes/notes.json', { notes: [], nextId: 1 });
+  print('  SQLite record: notes/notes.json', 'green');
 }
 
 // ─── Step 11 — Plain data file initialisation ────────────────────────────────
@@ -1168,8 +1144,8 @@ function step11PlainFiles() {
   storage.initializeIfMissing('schedules/schedules.json', { schedules: [], nextId: 1, history: [] });
   print('  ✓ schedules/schedules.json', 'green');
 
-  storage.initializeIfMissing('daemon-config.json', { enabled: false, timezone: 'UTC' });
-  print('  ✓ daemon-config.json', 'green');
+  // Daemon configuration is now represented by SQLite-backed schedules.
+  print('  SQLite-backed schedules initialized', 'green');
 }
 
 // ─── Step 12 — Log file initialisation ───────────────────────────────────────
@@ -1202,7 +1178,7 @@ function step13PersistSettings({ errorChannelId }) {
   }
 
   const storage = require('./utils/storage');
-  const file    = settingsStorageKey();
+  const file    = 'settings.enc';
 
   try {
     const settings = storage.encryptedRead(file, { bot: {}, permissions: {}, github: {}, deploy: {}, notifications: {} });
@@ -1257,6 +1233,21 @@ async function step15RunTests() {
     print(`  ✗ Test suite could not be loaded: ${err.message}`, 'red');
     print('  Continuing setup — run  npm run test  manually to diagnose.', 'yellow');
     return { passed: 0, failed: 1, warnings: 0 };
+  }
+
+  const { spawnSync } = require('child_process');
+  print('\n  Running automated logic tests…\n', 'cyan');
+  const logicTests = spawnSync(process.execPath, ['--test', 'test/core.test.js'], {
+    cwd: __dirname,
+    stdio: 'inherit',
+    env: process.env
+  });
+  if (logicTests.error || logicTests.status !== 0) {
+    const reason = logicTests.error?.message || `exit code ${logicTests.status}`;
+    print(`  ✗ Logic tests failed: ${reason}`, 'red');
+    results.failed++;
+  } else {
+    print('  ✓ Automated logic tests passed.', 'green');
   }
 
   print('');

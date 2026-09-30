@@ -94,10 +94,12 @@ function _resolve(ref) {
  * Always stamps the current time as `updated`.
  */
 function _save(nid, updates) {
-  return storage.updateById(NOTES_FILE, nid, {
+  const saved = storage.updateById(NOTES_FILE, nid, {
     ...updates,
     updated: new Date().toISOString()
   }, NOTES_KEY, 'nid');
+  if (!saved) throw new Error('Could not save the note.');
+  return true;
 }
 
 /**
@@ -123,7 +125,7 @@ function _nextId() {
   const data = storage.read(NOTES_FILE, { notes: [], nextId: 1 });
   const next = data.nextId || 1;
   data.nextId = next + 1;
-  storage.write(NOTES_FILE, data);
+  if (!storage.write(NOTES_FILE, data)) throw new Error('Could not allocate a note ID.');
   return `N${next}`;
 }
 
@@ -351,7 +353,7 @@ module.exports = {
         createdBy: interaction.user.tag
       };
 
-      storage.append(NOTES_FILE, note, NOTES_KEY);
+      if (!storage.append(NOTES_FILE, note, NOTES_KEY)) throw new Error('Could not save the note.');
       logger.command('note insert', interaction.user.tag, true, { nid, title, action: 'create' });
 
       const embed = new EmbedBuilder()
@@ -406,7 +408,7 @@ module.exports = {
         createdBy: interaction.user.tag
       };
 
-      storage.append(NOTES_FILE, note, NOTES_KEY);
+      if (!storage.append(NOTES_FILE, note, NOTES_KEY)) throw new Error('Could not save the note.');
       logger.command('note append', interaction.user.tag, true, { nid, title, action: 'create' });
 
       const embed = new EmbedBuilder()
@@ -605,7 +607,7 @@ module.exports = {
       return;
     }
 
-    storage.removeById(NOTES_FILE, note.nid, NOTES_KEY, 'nid');
+    if (!storage.removeById(NOTES_FILE, note.nid, NOTES_KEY, 'nid')) throw new Error('Could not remove the note.');
     logger.command('note remove', interaction.user.tag, true, { nid: note.nid });
 
     await interaction.reply({
@@ -632,7 +634,7 @@ module.exports = {
       createdBy: interaction.user.tag
     };
 
-    storage.append(NOTES_FILE, note, NOTES_KEY);
+    if (!storage.append(NOTES_FILE, note, NOTES_KEY)) throw new Error('Could not save the note.');
     logger.command('note push', interaction.user.tag, true, { nid, title });
 
     const embed = new EmbedBuilder()
@@ -666,7 +668,7 @@ module.exports = {
     }
 
     const last = notes[notes.length - 1];
-    storage.removeById(NOTES_FILE, last.nid, NOTES_KEY, 'nid');
+    if (!storage.removeById(NOTES_FILE, last.nid, NOTES_KEY, 'nid')) throw new Error('Could not remove the note.');
     logger.command('note pop', interaction.user.tag, true, { nid: last.nid, title: last.title });
 
     const remaining = storage.list(NOTES_FILE, NOTES_KEY).length;

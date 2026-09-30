@@ -4,9 +4,8 @@
  * Standalone entrypoint for the GitHub webhook server.
  * Run with:  npm run webhook
  *
- * The server is also started inline inside sanwan.js when
- * GITHUB_WEBHOOK_SECRET or GITHUB_WEBHOOK_PORT is set, so you only need
- * this file if you want to run the webhook listener as a separate process.
+ * The bot can also start the listener inline when GITHUB_MODE=webhook.
+ * Use this entrypoint when you want the webhook listener in a separate process.
  */
 
 'use strict';

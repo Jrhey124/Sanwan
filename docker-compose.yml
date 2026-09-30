@@ -1,0 +1,38 @@
+services:
+  bot:
+    build: .
+    image: sanwan:local
+    env_file: .env
+    environment:
+      SQLITE_PATH: /app/data/sanwan.sqlite
+    volumes:
+      - sanwan-data:/app/data
+    restart: unless-stopped
+
+  daemon:
+    build: .
+    image: sanwan:local
+    command: ["npm", "run", "daemon"]
+    env_file: .env
+    environment:
+      SQLITE_PATH: /app/data/sanwan.sqlite
+    volumes:
+      - sanwan-data:/app/data
+    restart: unless-stopped
+
+  webhook:
+    build: .
+    image: sanwan:local
+    command: ["npm", "run", "webhook"]
+    profiles: [webhook]
+    env_file: .env
+    environment:
+      SQLITE_PATH: /app/data/sanwan.sqlite
+    ports:
+      - "${WEBHOOK_PORT:-3000}:3000"
+    volumes:
+      - sanwan-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  sanwan-data:

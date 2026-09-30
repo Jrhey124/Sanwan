@@ -25,6 +25,8 @@ module.exports = {
         .addIntegerOption(option =>
           option.setName('lines')
             .setDescription('Number of lines to show (default: 50)')
+            .setMinValue(1)
+            .setMaxValue(1000)
             .setRequired(false)
         )
     )
@@ -54,7 +56,12 @@ module.exports = {
 
   async viewLogs(interaction) {
     const filename = interaction.options.getString('file');
-    const lines = interaction.options.getInteger('lines') || 50;
+    const requestedLines = interaction.options.getInteger('lines');
+    const lines = requestedLines === null ? 50 : requestedLines;
+    if (!Number.isInteger(lines) || lines < 1 || lines > 1000) {
+      await interaction.reply({ content: '❌ Lines must be between 1 and 1000.', ephemeral: true });
+      return;
+    }
 
     const content = logger.readLog(filename, lines);
 

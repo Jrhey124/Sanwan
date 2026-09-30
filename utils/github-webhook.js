@@ -49,6 +49,7 @@ class GitHubWebhook extends EventEmitter {
     this.secret = opts.secret || process.env.GITHUB_WEBHOOK_SECRET || '';
     this.port   = Number(opts.port  || process.env.GITHUB_WEBHOOK_PORT || 3000);
     this.path   = opts.path  || process.env.GITHUB_WEBHOOK_PATH  || '/webhook';
+    this.maxBodyBytes = opts.maxBodyBytes || 25 * 1024 * 1024;
 
     this._server = null;
   }
@@ -58,6 +59,10 @@ class GitHubWebhook extends EventEmitter {
   /** Start the HTTP server. Returns a Promise that resolves when listening. */
   start() {
     return new Promise((resolve, reject) => {
+      if (!this.secret) {
+        reject(new Error('GITHUB_WEBHOOK_SECRET is required to start the webhook server.'));
+        return;
+      }
       this._server = http.createServer((req, res) => {
         this._handleRequest(req, res);
       });
@@ -96,10 +101,29 @@ class GitHubWebhook extends EventEmitter {
       return;
     }
 
+    if (!this.secret) {
+      res.writeHead(503);
+      res.end('Webhook signature verification is not configured');
+      return;
+    }
+
     // Collect body
     const chunks = [];
-    req.on('data', chunk => chunks.push(chunk));
+    let bodyBytes = 0;
+    let bodyRejected = false;
+    req.on('data', chunk => {
+      if (bodyRejected) return;
+      bodyBytes += chunk.length;
+      if (bodyBytes > this.maxBodyBytes) {
+        bodyRejected = true;
+        res.writeHead(413);
+        res.end('Payload too large');
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
+      if (bodyRejected) return;
       const body = Buffer.concat(chunks);
 
       // ── Signature verification ──────────────────────────────────────────
@@ -156,6 +180,7 @@ class GitHubWebhook extends EventEmitter {
     });
 
     req.on('error', err => {
+      if (res.writableEnded) return;
       logger.error('GitHub webhook request error', { error: err.message });
       res.writeHead(500);
       res.end('Internal server error');

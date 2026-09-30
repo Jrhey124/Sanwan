@@ -49,7 +49,7 @@ Manages scheduled jobs and cron tasks.
       "sid": "S001",
       "name": "daily-backup",
       "when": "0 2 * * *",
-      "command": "/deploy backup",
+      "command": "/cmd backup",
       "enabled": true,
       "notifyChannel": "123456789012345678",
       "created": "2024-01-15T10:30:00.000Z",
@@ -90,6 +90,8 @@ Manages scheduled jobs and cron tasks.
 - `0 9 * * 1` - Every Monday at 9:00 AM
 - `0 0 1 * *` - First day of every month at midnight
 
+Use a registered shell shortcut for the command field, for example `/cmd backup` or `/cmd deploy {"branch":"main"}`. Arguments must be a JSON object containing strings, numbers, or booleans.
+
 ### notes.json
 Stores notes and documentation.
 
@@ -124,8 +126,8 @@ Stores notes and documentation.
 - `updated`: Last update timestamp
 - `createdBy`: User who created the note
 
-### settings.json
-Global bot configuration and settings.
+### settings.enc
+Encrypted global bot configuration. The JSON below is the decrypted payload stored inside the encrypted envelope; edit these settings through `npm run setup`.
 
 ```json
 {
@@ -171,7 +173,7 @@ Daemon service configuration.
     "tasks": true,
     "checkInterval": "0 * * * *"
   },
-  "timezone": "America/New_York"
+  "timezone": "UTC"
 }
 ```
 
@@ -193,7 +195,7 @@ data/
 │   └── daemon.log
 ├── backups/
 │   └── (automatic backups)
-├── settings.json
+├── settings.enc
 └── daemon-config.json
 ```
 

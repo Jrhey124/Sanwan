@@ -10,7 +10,7 @@
  *  T04  Encryption round-trip (AES-256-GCM)
  *  T05  Encrypted storage read / write / opacity
  *  T06  Command loading (name, run, data)
- *  T07  Command mock execution (run() returns Promise)
+ *  T07  Command async handler shape
  *  T08  Owner-permission list in encrypted settings
  *  T09  GitHub webhook module + env config
  *  T10  Daemon configuration
@@ -81,14 +81,13 @@ function T01_environment() {
 
   const required = ['DISCORD_TOKEN', 'CLIENT_ID', 'GUILD_ID'];
   const optional = [
-    'AI_PROVIDER', 'AI_TOKEN', 'AI_MODEL',
-    'SETTINGS_KEY', 'SETTINGS_PATH',
+    'SETTINGS_KEY',
     'GITHUB_WEBHOOK_SECRET', 'GITHUB_WEBHOOK_PORT', 'GITHUB_WEBHOOK_PATH'
   ];
 
   for (const k of required) {
     process.env[k]
-      ? pass(`ENV ${k}`, `${process.env[k].slice(0, 20)}…`)
+      ? pass(`ENV ${k}`, 'set')
       : fail(`ENV ${k}`, 'required variable is missing');
   }
 
@@ -118,9 +117,13 @@ function T02_directories() {
 
   for (const dir of dirs) {
     const full = path.join(__dirname, dir);
-    fs.existsSync(full) && fs.statSync(full).isDirectory()
-      ? pass(`DIR ${dir}`)
-      : fail(`DIR ${dir}`, 'not found — run npm run setup');
+    if (fs.existsSync(full) && fs.statSync(full).isDirectory()) {
+      pass(`DIR ${dir}`);
+    } else if (dir.startsWith('data/')) {
+      warn(`DIR ${dir}`, 'not created yet — run npm run setup');
+    } else {
+      fail(`DIR ${dir}`, 'not found');
+    }
   }
 }
 
@@ -190,7 +193,9 @@ function T05_encryptedStorage() {
 
   if (!process.env.SETTINGS_KEY) { warn('Encrypted storage', 'SETTINGS_KEY not set — skipping'); return; }
 
-  const storage = require('./utils/storage');
+  const Storage = require('./utils/storage').Storage;
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sanwan-encrypted-diagnostic-'));
+  const storage = new Storage(tempDir);
   const tmp     = 'test-enc-tmp.enc';
 
   try {
@@ -204,7 +209,7 @@ function T05_encryptedStorage() {
       ? pass('encryptedRead()', 'decrypted data matches')
       : fail('encryptedRead()', `unexpected: ${JSON.stringify(read)}`);
 
-    const raw = fs.readFileSync(path.join(__dirname, 'data', tmp), 'utf8');
+    const raw = fs.readFileSync(path.join(tempDir, tmp), 'utf8');
     !raw.includes('"hello"')
       ? pass('File opacity', 'plaintext not visible in raw bytes')
       : fail('File opacity', 'plaintext found in raw file — encryption not working');
@@ -212,7 +217,7 @@ function T05_encryptedStorage() {
   } catch (err) {
     fail('Encrypted storage', err.message);
   } finally {
-    try { fs.unlinkSync(path.join(__dirname, 'data', tmp)); } catch { /* ignore */ }
+    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 }
 
@@ -243,44 +248,21 @@ function T06_commandLoading() {
   }
 }
 
-// ─── T07 — Command mock execution ────────────────────────────────────────────
+// ─── T07 — Command async handler shape ───────────────────────────────────────
 
 function T07_commandMock() {
-  section('T07 — Command Mock Execution');
+  section('T07 — Command Async Handler Shape');
 
   const dir = path.join(__dirname, 'commands');
   if (!fs.existsSync(dir)) return;
-
-  const mock = {
-    options: {
-      getString:     () => null,
-      getInteger:    () => null,
-      getBoolean:    () => null,
-      getUser:       () => null,
-      getSubcommand: () => 'list'
-    },
-    user:      { id: 'test-user', tag: 'TestUser#0000' },
-    member:    { roles: { cache: { keys: () => [] } } },
-    guild:     { id: 'test-guild' },
-    channelId: 'test-channel',
-    replied:   false, deferred: false,
-    reply:      async () => {},
-    editReply:  async () => {},
-    deferReply: async () => {}
-  };
 
   for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.js'))) {
     try {
       const cmd = require(path.join(dir, file));
       if (typeof cmd.run !== 'function') continue;
-
-      const result = cmd.run(mock);
-      if (result && typeof result.then === 'function') {
-        result.catch(() => {});
-        pass(`MOCK ${cmd.name}`, 'run() returns a Promise');
-      } else {
-        pass(`MOCK ${cmd.name}`, 'run() invoked (non-async)');
-      }
+      cmd.run.constructor.name === 'AsyncFunction'
+        ? pass(`HANDLER ${cmd.name}`, 'run() is async and returns a Promise')
+        : fail(`HANDLER ${cmd.name}`, 'run() should be async');
     } catch (err) {
       fail(`MOCK ${file}`, err.message);
     }
@@ -298,10 +280,7 @@ function T08_ownerPermissions() {
 
   // Normalise the path the same way setup.js does — strip components that
   // storage already provides via its own dataDir (./data/).
-  const file = (process.env.SETTINGS_PATH || './data/settings.enc')
-    .replace(/^\.\/data\//, '')
-    .replace(/^data\//, '')
-    .replace(/^\.\//, '');
+  const file = 'settings.enc';
 
   if (!fs.existsSync(path.join(__dirname, 'data', file))) {
     warn('settings.enc', 'not found — run npm run setup');
@@ -334,7 +313,7 @@ function T09_webhook() {
 
   process.env.GITHUB_WEBHOOK_SECRET
     ? pass('GITHUB_WEBHOOK_SECRET', 'set')
-    : warn('GITHUB_WEBHOOK_SECRET', 'not set — no signature verification');
+    : warn('GITHUB_WEBHOOK_SECRET', 'not set — webhook server will refuse to start');
 
   process.env.GITHUB_WEBHOOK_PORT
     ? pass('GITHUB_WEBHOOK_PORT', process.env.GITHUB_WEBHOOK_PORT)
@@ -384,8 +363,8 @@ function T11_logFiles() {
     const full = path.join(logDir, name);
     if (!fs.existsSync(full)) { warn(`LOG ${name}`, 'not found — created when bot runs'); continue; }
     try {
-      fs.appendFileSync(full, '');
-      pass(`LOG ${name}`, `${fs.readFileSync(full, 'utf8').split('\n').length} lines, r/w OK`);
+      fs.accessSync(full, fs.constants.R_OK | fs.constants.W_OK);
+      pass(`LOG ${name}`, `${fs.readFileSync(full, 'utf8').split('\n').length} lines, r/w permissions OK`);
     } catch (err) {
       fail(`LOG ${name}`, `not writable — ${err.message}`);
     }
@@ -539,7 +518,7 @@ function T17_rolePermissions() {
       : fail('checkPermission (no entry)', 'should be open when no roleMap entry exists');
 
     // Load the live roleMap if settings.enc exists
-    const sf = (process.env.SETTINGS_PATH || './data/settings.enc').replace(/^\.\//, '');
+    const sf = 'settings.enc';
     if (fs.existsSync(path.join(__dirname, 'data', sf))) {
       const roleMap = perms.loadRoleMap();
       pass('loadRoleMap()', `${Object.keys(roleMap).length} mapping(s) loaded`);
@@ -552,26 +531,26 @@ function T17_rolePermissions() {
         pass('help roleMap invariant', '/help is either absent (open) or enabled');
       }
 
-      // If 'deploy' has an entry, verify it has a requiredRoles array
-      const deployEntry = roleMap['deploy'];
-      if (deployEntry) {
-        Array.isArray(deployEntry.requiredRoles)
-          ? pass('deploy roleMap entry', `requiredRoles: [${deployEntry.requiredRoles.join(', ')}]`)
-          : fail('deploy roleMap entry', 'requiredRoles must be an array');
+      // If 'task' has an entry, verify it has a requiredRoles array
+      const taskEntry = roleMap['task'];
+      if (taskEntry) {
+        Array.isArray(taskEntry.requiredRoles)
+          ? pass('task roleMap entry', `requiredRoles: [${taskEntry.requiredRoles.join(', ')}]`)
+          : fail('task roleMap entry', 'requiredRoles must be an array');
       } else {
-        warn('deploy roleMap entry', 'not configured — /deploy is open to all members');
+        warn('task roleMap entry', 'not configured — /task has no role restriction');
       }
 
       // Role check: requireAll=false, member has one matching role → allowed
-      if (deployEntry && deployEntry.requiredRoles.length > 0) {
-        const firstRole = deployEntry.requiredRoles[0];
-        const result    = perms.checkPermission('deploy', [firstRole, 'other-role']);
+      if (taskEntry && taskEntry.requiredRoles?.length > 0) {
+        const firstRole = taskEntry.requiredRoles[0];
+        const result    = perms.checkPermission('task', [firstRole, 'other-role']);
         result.allowed
           ? pass('checkPermission role match', `allowed when member holds "${firstRole}"`)
           : fail('checkPermission role match', 'should be allowed when member holds a required role');
 
         // Role check: member has none of the roles → denied
-        const denied = perms.checkPermission('deploy', ['unrelated-role-id']);
+        const denied = perms.checkPermission('task', ['unrelated-role-id']);
         !denied.allowed
           ? pass('checkPermission role deny', 'correctly denied when member lacks required roles')
           : fail('checkPermission role deny', 'should be denied when member holds no required roles');
@@ -1016,7 +995,7 @@ function T25_deployFlush() {
     { name: 'loadCommandPayloads exported',    pattern: /module\.exports.*loadCommandPayloads/ },
     { name: 'deployCommands exported',         pattern: /module\.exports.*deployCommands/ },
     { name: 'require cache cleared for cmd',   pattern: /delete require\.cache/ },
-    { name: 'buildData called for cmd.js',     pattern: /mod\.buildData\s*&&.*mod\.buildData\(\)/ }
+    { name: 'buildData called for cmd.js',     pattern: /mod\.buildData\s*&&[\s\S]*?mod\.buildData\(\)/ }
   ];
 
   for (const { name, pattern } of checks) {

@@ -100,9 +100,8 @@ function detectPlatform() {
  *   user?: string        (Linux/macOS) run-as user
  * }} opts
  */
-function serviceInstall(opts) {
+function serviceInstall(opts, platform = os.platform()) {
   const { name, description, workingDir, nodeExec, script, user } = opts;
-  const platform = os.platform();
 
   if (platform === 'linux') {
     return _installSystemd({ name, description, workingDir, nodeExec, script, user });
@@ -218,12 +217,33 @@ function _installLaunchd({ name, description, workingDir, nodeExec, script }) {
 // ── Windows / Task Scheduler ───────────────────────────────────────────────
 
 function _installWindowsTask({ name, description, workingDir, nodeExec, script }) {
-  // Build a minimal XML task definition
-  const xmlContent = [
+  const xmlContent = buildWindowsTaskXml({ description, workingDir, nodeExec, script });
+  const xmlPath = path.join(workingDir, `${name}-task.xml`);
+  fs.writeFileSync(xmlPath, `\uFEFF${xmlContent}`, 'utf16le');
+
+  return {
+    filePath: xmlPath,
+    instructions: [
+      `Task XML staged at: ${xmlPath}`,
+      `Run in an elevated PowerShell:`,
+      `  Register-ScheduledTask -TaskName "${name}" -Xml (Get-Content "${xmlPath}" | Out-String) -Force`,
+      `To start:  Start-ScheduledTask -TaskName "${name}"`,
+      `To stop:   Stop-ScheduledTask  -TaskName "${name}"`,
+      `To status: Get-ScheduledTask   -TaskName "${name}"`
+    ]
+  };
+}
+
+function xmlEscape(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function buildWindowsTaskXml({ description, workingDir, nodeExec, script }) {
+  return [
     '<?xml version="1.0" encoding="UTF-16"?>',
     '<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">',
     '  <RegistrationInfo>',
-    `    <Description>${description}</Description>`,
+    `    <Description>${xmlEscape(description)}</Description>`,
     '  </RegistrationInfo>',
     '  <Triggers>',
     '    <BootTrigger><Enabled>true</Enabled></BootTrigger>',
@@ -237,29 +257,14 @@ function _installWindowsTask({ name, description, workingDir, nodeExec, script }
     '  </Settings>',
     '  <Actions>',
     '    <Exec>',
-    `      <Command>${nodeExec}</Command>`,
-    `      <Arguments>${path.join(workingDir, script)}</Arguments>`,
-    `      <WorkingDirectory>${workingDir}</WorkingDirectory>`,
+    `      <Command>${xmlEscape(nodeExec)}</Command>`,
+    `      <Arguments>${xmlEscape(path.join(workingDir, script))}</Arguments>`,
+    `      <WorkingDirectory>${xmlEscape(workingDir)}</WorkingDirectory>`,
     '    </Exec>',
     '  </Actions>',
     '</Task>',
     ''
   ].join('\r\n');
-
-  const xmlPath = path.join(workingDir, `${name}-task.xml`);
-  fs.writeFileSync(xmlPath, xmlContent, 'utf8');
-
-  return {
-    filePath: xmlPath,
-    instructions: [
-      `Task XML staged at: ${xmlPath}`,
-      `Run in an elevated PowerShell:`,
-      `  Register-ScheduledTask -TaskName "${name}" -Xml (Get-Content "${xmlPath}" | Out-String) -Force`,
-      `To start:  Start-ScheduledTask -TaskName "${name}"`,
-      `To stop:   Stop-ScheduledTask  -TaskName "${name}"`,
-      `To status: Get-ScheduledTask   -TaskName "${name}"`
-    ]
-  };
 }
 
 // ─── Service control commands (return strings, not exec) ──────────────────────
@@ -335,5 +340,6 @@ module.exports = {
   serviceStop,
   diskCommand,
   resourceCommand,
-  networkCommand
+  networkCommand,
+  buildWindowsTaskXml
 };

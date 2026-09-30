@@ -1,6 +1,9 @@
 const { SlashCommandBuilder } = require('discord.js');
 const storage = require('../utils/storage');
 const logger = require('../utils/logger');
+const { isValidCronExpression } = require('../utils/cron-expression');
+const registry = require('../utils/registry');
+const { parseScheduleInvocation, resolveShellCommand } = require('../utils/shell-command');
 
 module.exports = {
   name: 'schedule',
@@ -24,7 +27,7 @@ module.exports = {
         )
         .addStringOption(option =>
           option.setName('command')
-            .setDescription('Command to execute')
+            .setDescription('Registered shell shortcut: /cmd <id> {"placeholder":"value"}')
             .setRequired(true)
         )
     )
@@ -101,13 +104,26 @@ module.exports = {
     const cron = interaction.options.getString('cron');
     const command = interaction.options.getString('command');
 
-    // Basic cron validation
-    const cronParts = cron.split(' ');
-    if (cronParts.length !== 5) {
+    if (!isValidCronExpression(cron)) {
       await interaction.reply({
         content: '❌ Invalid cron expression. Format: "minute hour day month weekday"\nExample: "0 2 * * *" (daily at 2am)',
         ephemeral: true
       });
+      return;
+    }
+
+    try {
+      const { shortcutId, values } = parseScheduleInvocation(command);
+      const entry = registry.listAllowedCommands().find(item => item.id === shortcutId && item.type === 'shell' && item.enabled !== false);
+      if (!entry) throw new Error(`No enabled shell shortcut named "${shortcutId}" is registered.`);
+      resolveShellCommand(entry, name => values[name.toLowerCase()]);
+    } catch (error) {
+      await interaction.reply({ content: `❌ ${error.message}`, ephemeral: true });
+      return;
+    }
+
+    if (storage.list('schedules/schedules.json', 'schedules').some(schedule => schedule.name.toLowerCase() === name.toLowerCase())) {
+      await interaction.reply({ content: `❌ A schedule named "${name}" already exists.`, ephemeral: true });
       return;
     }
 
@@ -124,7 +140,9 @@ module.exports = {
       createdBy: interaction.user.tag
     };
 
-    storage.append('schedules/schedules.json', schedule, 'schedules');
+    if (!storage.append('schedules/schedules.json', schedule, 'schedules')) {
+      throw new Error('Could not save the schedule.');
+    }
     logger.command('schedule set', interaction.user.tag, true, { sid, name });
 
     await interaction.reply({

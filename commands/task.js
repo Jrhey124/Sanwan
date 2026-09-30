@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const storage = require('../utils/storage');
 const logger = require('../utils/logger');
+const { isValidDateOnly, isDueWithinDays } = require('../utils/task-dates');
 
 module.exports = {
   name: 'task',
@@ -129,6 +130,11 @@ module.exports = {
     const assignee = interaction.options.getString('assignee') || 'Unassigned';
     const deadline = interaction.options.getString('deadline') || null;
 
+    if (deadline && !isValidDateOnly(deadline)) {
+      await interaction.reply({ content: '❌ Deadline must be a real calendar date in YYYY-MM-DD format.', ephemeral: true });
+      return;
+    }
+
     const tid = storage.getNextId('tasks/tasks.json', 'T');
     
     const task = {
@@ -144,7 +150,9 @@ module.exports = {
       createdBy: interaction.user.tag
     };
 
-    storage.append('tasks/tasks.json', task, 'tasks');
+    if (!storage.append('tasks/tasks.json', task, 'tasks')) {
+      throw new Error('Could not save the task.');
+    }
     
     logger.command('task add', interaction.user.tag, true, { tid, title });
 
@@ -191,6 +199,11 @@ module.exports = {
     const tid = interaction.options.getString('tid');
     const field = interaction.options.getString('field');
     const value = interaction.options.getString('value');
+
+    if (field === 'deadline' && !isValidDateOnly(value)) {
+      await interaction.reply({ content: '❌ Deadline must be a real calendar date in YYYY-MM-DD format.', ephemeral: true });
+      return;
+    }
 
     const task = storage.findById('tasks/tasks.json', tid, 'tasks', 'tid');
     
@@ -251,16 +264,16 @@ module.exports = {
 
   async showDueTasks(interaction) {
     const days = interaction.options.getInteger('days');
+    if (!Number.isInteger(days) || days < 0 || days > 3650) {
+      await interaction.reply({ content: '❌ Days must be a whole number between 0 and 3650.', ephemeral: true });
+      return;
+    }
     const tasks = storage.list('tasks/tasks.json', 'tasks');
     
     const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
-
     const dueTasks = tasks.filter(task => {
-      if (!task.deadline) return false;
-      const deadline = new Date(task.deadline);
-      return deadline >= now && deadline <= futureDate;
+      if (!task.deadline || task.status === 'completed') return false;
+      return isDueWithinDays(task.deadline, days, now);
     });
 
     if (dueTasks.length === 0) {

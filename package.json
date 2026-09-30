@@ -6,7 +6,8 @@
   "scripts": {
     "start":    "node sanwan.js",
     "setup":    "node setup.js",
-    "test":     "node test.js",
+    "test":     "node --test test/core.test.js",
+    "test:diagnostics": "node test.js",
     "deploy":   "node deploy-commands.js",
     "daemon":   "node daemon.js",
     "webhook":  "node webhook-server.js"
@@ -15,7 +16,7 @@
   "author":   "",
   "license":  "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.5.0"
   },
   "dependencies": {
     "discord.js": "^14.27.0",

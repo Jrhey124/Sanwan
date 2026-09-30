@@ -80,14 +80,19 @@ const SETTINGS_FILE = () => {
  * @returns {Record<string, RoleEntry>}
  */
 function loadRoleMap() {
-  if (!process.env.SETTINGS_KEY) return {};
+  if (!process.env.SETTINGS_KEY) {
+    if (require('fs').existsSync(storage.getPath(SETTINGS_FILE()))) {
+      throw new Error('SETTINGS_KEY is required to read saved role permissions.');
+    }
+    return {};
+  }
 
   try {
     const settings = storage.encryptedRead(SETTINGS_FILE(), {});
     return settings?.permissions?.roleMap ?? {};
   } catch (err) {
     console.error('[permissions] Could not load roleMap:', err.message);
-    return {};
+    throw new Error('Could not read saved role permissions; command access is blocked.', { cause: err });
   }
 }
 
@@ -106,7 +111,9 @@ function saveRoleMap(roleMap) {
   if (!settings.permissions) settings.permissions = {};
   settings.permissions.roleMap = roleMap;
 
-  storage.encryptedWrite(SETTINGS_FILE(), settings);
+  if (!storage.encryptedWrite(SETTINGS_FILE(), settings)) {
+    throw new Error('Could not persist role permissions.');
+  }
 }
 
 // ─── Permission check ─────────────────────────────────────────────────────────

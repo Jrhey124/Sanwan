@@ -119,7 +119,17 @@ async function enqueue(interaction, commandFn) {
     : [];
 
   // ── Gate A ────────────────────────────────────────────────────────────────
-  const gateA = _gateA(commandName);
+  let gateA;
+  try {
+    gateA = _gateA(commandName);
+  } catch (error) {
+    logger.error('queue: command registry check failed; command blocked', { command: commandName, error: error.message });
+    await interaction.reply({
+      content: '❌ Security settings could not be read. This command was blocked.',
+      ephemeral: true
+    }).catch(() => {});
+    return;
+  }
   if (!gateA.allowed) {
     logger.warn(`queue: Gate A denied /${commandName}`, { user: userTag, reason: gateA.reason });
     await interaction.reply({
@@ -130,7 +140,17 @@ async function enqueue(interaction, commandFn) {
   }
 
   // ── Gate B ────────────────────────────────────────────────────────────────
-  const gateB = _gateB(commandName, memberRoleIds);
+  let gateB;
+  try {
+    gateB = _gateB(commandName, memberRoleIds);
+  } catch (error) {
+    logger.error('queue: role permission check failed; command blocked', { command: commandName, error: error.message });
+    await interaction.reply({
+      content: '❌ Security settings could not be read. This command was blocked.',
+      ephemeral: true
+    }).catch(() => {});
+    return;
+  }
   if (!gateB.allowed) {
     logger.warn(`queue: Gate B denied /${commandName}`, { user: userTag, reason: gateB.reason });
     await interaction.reply({
@@ -152,7 +172,7 @@ async function enqueue(interaction, commandFn) {
 
   // If a job is already running for this user, acknowledge the queue position
   if (queued) {
-    await interaction.reply({
+    void interaction.reply({
       content: `⏳ \`/${commandName}\` is queued (position ${bucket.jobs.length + 1}) — it will run shortly.`,
       ephemeral: true
     }).catch(() => {});

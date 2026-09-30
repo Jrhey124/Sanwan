@@ -37,9 +37,10 @@
 'use strict';
 
 const { SlashCommandBuilder } = require('discord.js');
-const { execSync }  = require('child_process');
 const registry      = require('../utils/registry');
 const logger        = require('../utils/logger');
+const { tokenizeArguments } = require('../utils/arguments');
+const { resolveShellCommand, runShellCommand } = require('../utils/shell-command');
 
 // ─── Build the slash command definition ───────────────────────────────────────
 
@@ -173,31 +174,25 @@ module.exports = {
     // Each {placeholder} becomes a Discord string option at deploy time.
     // We replace every occurrence globally so the same placeholder can
     // appear multiple times in one command string.
-    let resolved = entry.command
-      || `${entry.filepath}${entry.params ? ' ' + entry.params : ''}`;
-
-    // Collect all unique placeholder names first, then substitute each one.
-    // Using a Set prevents double-substitution if the same name appears twice.
-    const placeholders = new Set(
-      [...resolved.matchAll(/\{(\w+)\}/g)].map(m => m[1])
-    );
-    for (const pName of placeholders) {
-      const value   = interaction.options.getString(pName.toLowerCase()) ?? '';
-      // Replace ALL occurrences of {pName} in the resolved string
-      resolved = resolved.replaceAll(`{${pName}}`, value);
+    let resolved;
+    let args;
+    try {
+      resolved = resolveShellCommand(entry, name => interaction.options.getString(name.toLowerCase()));
+      args = resolved.args;
+    } catch (err) {
+      await interaction.editReply(`❌ ${err.message}`);
+      return;
     }
 
     logger.info(`cmd: executing "${shortcut}"`, {
       user:     interaction.user.tag,
-      resolved: resolved.slice(0, 120)   // don't log full command with sensitive params
+      executable: resolved.executable,
+      argumentCount: args.length
     });
 
     // ── Execute ───────────────────────────────────────────────────────────
     try {
-      const output = execSync(resolved, {
-        timeout: 15_000,
-        windowsHide: true   // prevent a console window popping on Windows
-      }).toString().trim();
+      const output = await runShellCommand(resolved);
 
       const display = output.length > 1900
         ? output.slice(0, 1900) + '\n…(truncated)'

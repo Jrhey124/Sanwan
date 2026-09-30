@@ -63,7 +63,7 @@ const STATIC_CATALOGUE = {
     icon:        '⏰',
     description: 'Manage cron-based scheduled jobs',
     subcommands: [
-      '`set <name> <cron>`   — create/update a schedule',
+      '`set <name> <cron> <command>` — schedule an enabled /cmd shortcut',
       '`list`                — show all schedules',
       '`history [name]`      — view execution history',
       '`remove <name>`       — delete a schedule',

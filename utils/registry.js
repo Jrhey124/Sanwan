@@ -7,7 +7,7 @@
  *
  *  1. allowedCommands   — which /cmd functions this device may run
  *  2. logSources        — named log files/paths the bot can read
- *  3. deployServices    — services the /deploy command can manage
+ *  3. deployServices    — stored service metadata; no /deploy command consumes it yet
  *
  * All three are stored together inside a single encrypted file:
  *   data/registry.enc   (AES-256-GCM, SETTINGS_KEY)
@@ -79,7 +79,12 @@ function _empty() {
  * @returns {{ allowedCommands: AllowedCommand[], logSources: LogSource[], deployServices: DeployService[] }}
  */
 function loadRegistry() {
-  if (!process.env.SETTINGS_KEY) return _empty();
+  if (!process.env.SETTINGS_KEY) {
+    if (require('fs').existsSync(storage.getPath(REGISTRY_FILE))) {
+      throw new Error('SETTINGS_KEY is required to read the saved command registry.');
+    }
+    return _empty();
+  }
 
   try {
     const data = storage.encryptedRead(REGISTRY_FILE, null);
@@ -93,7 +98,7 @@ function loadRegistry() {
     };
   } catch (err) {
     console.error('[registry] Could not load registry:', err.message);
-    return _empty();
+    throw new Error('Could not read the saved command registry; command access is blocked.', { cause: err });
   }
 }
 
@@ -106,7 +111,9 @@ function saveRegistry(data) {
   if (!process.env.SETTINGS_KEY) {
     throw new Error('SETTINGS_KEY is required to save the registry.');
   }
-  storage.encryptedWrite(REGISTRY_FILE, data);
+  if (!storage.encryptedWrite(REGISTRY_FILE, data)) {
+    throw new Error('Could not persist the command registry.');
+  }
 }
 
 // ─── Generic CRUD helpers (internal) ─────────────────────────────────────────

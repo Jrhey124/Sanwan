@@ -1,7 +1,7 @@
-{
+﻿{
   "_comment": "Example schema for the deployServices registry (stored encrypted in data/registry.enc).",
-  "_note": "Commands are shell strings executed by the /deploy command via child_process. Adjust for your OS and process manager.",
-  "_note2": "production and staging branch mappings apply to rollback and simulate.",
+  "_note": "Reference examples only. Sanwan has no /deploy command and does not execute these values.",
+  "_note2": "The current registry stores service metadata only; rollback and simulate are not implemented.",
   "deployServices": [
     {
       "id": "api",
@@ -34,7 +34,7 @@
     {
       "id": "nginx",
       "name": "nginx",
-      "description": "Nginx web server (systemctl — Linux only)",
+      "description": "Nginx web server (systemctl â€” Linux only)",
       "startCmd":   "sudo systemctl start nginx",
       "stopCmd":    "sudo systemctl stop nginx",
       "restartCmd": "sudo systemctl restart nginx",

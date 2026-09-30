@@ -1,218 +1,80 @@
-# Sanwan Bot - Quick Start Guide
+﻿# Sanwan Bot — Quick Start
 
-Get your Discord ChatOps bot running in 5 minutes!
+## Requirements
 
-## ⚡ Fast Setup (5 minutes)
+- Node.js 18.17 or newer
+- A Discord application and bot token
+- A Discord server where you can install the bot
 
-### 1. Install Dependencies
+## Install and configure
+
 ```bash
-npm install
-```
-
-### 2. Get Discord Bot Token
-
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Click "New Application" → Name it "Sanwan"
-3. Go to "Bot" → Click "Add Bot"
-4. Click "Reset Token" → Copy the token
-5. Enable these intents:
-   - ✅ Presence Intent
-   - ✅ Server Members Intent
-   - ✅ Message Content Intent
-
-### 3. Get Discord IDs
-
-**Application ID:**
-- General Information → Copy "Application ID"
-
-**Server ID:**
-- In Discord, enable Developer Mode (Settings → Advanced → Developer Mode)
-- Right-click your server → Copy ID
-
-### 4. Invite Bot to Server
-
-1. Go to OAuth2 → URL Generator
-2. Select scopes: `bot`, `applications.commands`
-3. Select permissions:
-   - Send Messages
-   - Use Slash Commands
-   - Embed Links
-   - Attach Files
-4. Copy URL and open in browser
-5. Select your server and authorize
-
-### 5. Run Setup
-```bash
+npm ci
 npm run setup
 ```
 
-Enter when prompted:
-- Discord Bot Token (from step 2)
-- Application Client ID (from step 3)
-- Guild (Server) ID (from step 3)
-- Press Enter to skip AI config (optional)
+The setup wizard collects Discord credentials and the encryption key, initializes data files, and can deploy the slash commands. You can also copy `.env.example` to `.env` and fill the values manually. Keep `.env` and `SETTINGS_KEY` private; losing the key makes encrypted notes and settings unreadable.
 
-### 6. Deploy Commands
+## Run
+
 ```bash
+npm test
 npm run deploy
-```
-
-### 7. Start Bot
-```bash
 npm start
 ```
 
-You should see: `✅ Logged in as Sanwan#1234`
-
-### 8. Test in Discord
-Type `/help` in your server!
-
-## 🎉 That's It!
-
-Your bot is now running and ready to use.
-
-## 📝 Quick Commands to Try
-
-```
-/help              - See all commands
-/task add          - Create a task
-/note add          - Create a note
-/logs view         - View logs
-```
-
-## 🔧 Optional: Setup Daemon (Scheduling)
-
-For scheduled tasks and reminders:
+Run the scheduler in another process if you use scheduled commands or reminders:
 
 ```bash
 npm run daemon
 ```
 
-Keep this running in a separate terminal or use a process manager like PM2.
+For GitHub webhooks, configure `GITHUB_MODE=webhook` and a webhook secret, expose the configured port, then run `npm run webhook`. Polling modes start with the bot process.
 
-## 🚀 Production Deployment
+## Commands
 
-### Using PM2 (Recommended)
+Use `/help` in Discord for the live command list. Current commands include `/task`, `/note`, `/schedule`, `/cmd`, `/logs`, `/systeminfo`, and `/ping`.
+
+To schedule a registered shortcut, use `/schedule set` with a five-field cron expression and a command in this form:
+
+```text
+/cmd <shortcut-id> {"placeholder":"value"}
+```
+
+For example, register a shell shortcut with ID `backup` and a `{target}` placeholder, then set its schedule command to `/cmd backup {"target":"daily"}`. Only registered enabled shortcuts can be scheduled. Changes take effect after restarting the daemon.
+
+## Tests
+
+- `npm test` runs logic tests without requiring Discord credentials.
+- `npm run test:diagnostics` checks project configuration and runtime files; it may report missing credentials when the bot has not been configured yet.
+
+Live Discord login, slash-command deployment, and GitHub delivery require valid credentials and should be checked in a test server.
+# Container deployment
+
+Install Docker Engine and Compose on the self-hosted machine, copy `.env.example`
+to `.env`, set the Discord/GitHub credentials and a stable `SETTINGS_KEY`, then:
 
 ```bash
-# Install PM2
-npm install -g pm2
-
-# Start bot
-pm2 start sanwan.js --name sanwan-bot
-
-# Start daemon
-pm2 start daemon.js --name sanwan-daemon
-
-# Save process list
-pm2 save
-
-# Setup auto-restart on reboot
-pm2 startup
+docker compose build
+docker compose up -d bot daemon
+docker compose ps
 ```
 
-### Using systemd (Linux)
+The database is persistent in the `sanwan-data` volume. Keep `.env` outside git
+and back up the volume. CI should build and publish the image, then the host
+pulls it and runs `docker compose up -d`.
+# Getting Discord credentials
 
-Create `/etc/systemd/system/sanwan.service`:
+Before starting Sanwan, copy `.env.example` to `.env` and configure:
 
-```ini
-[Unit]
-Description=Sanwan Discord Bot
-After=network.target
-
-[Service]
-Type=simple
-User=YOUR_USER
-WorkingDirectory=/path/to/Sanwan
-ExecStart=/usr/bin/node sanwan.js
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
+```env
+DISCORD_TOKEN=...
+CLIENT_ID=...
+GUILD_ID=...
 ```
 
-Enable and start:
-```bash
-sudo systemctl enable sanwan
-sudo systemctl start sanwan
-sudo systemctl status sanwan
-```
-
-## 🆘 Troubleshooting
-
-### Bot won't start
-```bash
-npm run test
-```
-This will identify configuration issues.
-
-### Commands not showing
-1. Wait 2-3 minutes for Discord to update
-2. Refresh Discord (Ctrl+R)
-3. Check bot has `applications.commands` scope
-4. Run `npm run deploy` again
-
-### Permission errors
-- Verify bot role is above other roles in Server Settings → Roles
-- Check channel permissions allow bot to read/send messages
-- Ensure required intents are enabled in Discord Developer Portal
-
-### Data not saving
-- Check `data/` directory exists and is writable
-- View error logs: `cat data/logs/errors.log`
-- Verify disk space: `df -h`
-
-## 📚 Next Steps
-
-- Read `SETUP_GUIDE.md` for detailed documentation
-- See `COMMAND_TEMPLATE.md` to add custom commands
-- Check `PROJECT_OVERVIEW.md` for architecture details
-- Review `data/schemas/README.md` for data structure
-
-## 🔗 Useful Links
-
-- [Discord.js Guide](https://discordjs.guide/)
-- [Discord Developer Portal](https://discord.com/developers)
-- [Node.js Documentation](https://nodejs.org/docs/)
-- [Cron Expression Generator](https://crontab.guru)
-
-## 💡 Tips
-
-- Use `/help <command>` for detailed command info
-- Check logs regularly: `tail -f data/logs/bot.log`
-- Backup `data/` directory before major changes
-- Use ephemeral responses (visible only to you) for sensitive commands
-
-## 🎯 Common Use Cases
-
-### Task Management
-```
-/task add "Setup CI/CD" @developer 2024-12-31
-/task list
-/task update T001 status completed
-```
-
-### Scheduling
-```
-/schedule set daily-backup "0 2 * * *" "/deploy backup"
-/schedule list
-```
-
-### Notes
-```
-/note add "Meeting Notes"
-/note push "Meeting Notes" "Discussed Q1 roadmap"
-/note export "Meeting Notes"
-```
-
-### Monitoring
-```
-/status disks
-/status resources
-/logs view bot.log 100
-```
-
----
-
-**Need help?** Check the logs in `data/logs/` or run `npm run test` to diagnose issues.
+Get `CLIENT_ID` from the Discord Developer Portal application's **General
+Information** page. Get `DISCORD_TOKEN` from the application's **Bot** page;
+use **Reset Token** if no token is currently visible. Enable Discord Developer
+Mode, then right-click your test server and choose **Copy Server ID** for
+`GUILD_ID`. Keep the token private and never commit `.env`.

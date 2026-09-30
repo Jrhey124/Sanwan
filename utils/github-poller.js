@@ -30,7 +30,7 @@
  *   GITHUB_MODE          polling | polling_pat | webhook
  *   GITHUB_REPO          owner/repo  e.g. "octocat/Hello-World"
  *   GITHUB_PAT           Personal Access Token  (polling_pat only)
- *   GITHUB_POLL_INTERVAL Polling interval in milliseconds (default 60000)
+ *   GITHUB_POLL_INTERVAL Polling interval in milliseconds (default 120000)
  *
  * ── Exported API ─────────────────────────────────────────────────────────────
  *
@@ -43,6 +43,8 @@
 const https        = require('https');
 const EventEmitter = require('events');
 const logger       = require('./logger');
+const ChangeTracker = require('./change-tracker');
+const { getPollInterval, DEFAULT_PUBLIC_INTERVAL } = require('./polling-config');
 
 // ─── Module-level state ───────────────────────────────────────────────────────
 
@@ -50,8 +52,8 @@ let _timer   = null;
 const _emitter = new EventEmitter();
 
 // Seen-set keepers so we only emit genuinely new items each tick
-let _seenCommits = new Set();
-let _seenIssues  = new Set();
+const _commitTracker = new ChangeTracker();
+const _issueTracker = new ChangeTracker();
 
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
@@ -127,8 +129,8 @@ async function _pollCommits(repo, pat) {
     const data = await _githubGet(`/repos/${repo}/commits?per_page=10`, pat);
     if (!data) return; // 304 Not Modified
 
-    const newCommits = data
-      .filter(c => !_seenCommits.has(c.sha))
+    const unseenCommits = _commitTracker.newItems(data, commit => commit.sha);
+    const newCommits = unseenCommits
       .map(c => ({
         sha:     c.sha,
         short:   c.sha.slice(0, 7),
@@ -137,11 +139,7 @@ async function _pollCommits(repo, pat) {
         url:     c.html_url
       }));
 
-    // Mark all fetched SHAs as seen
-    data.forEach(c => _seenCommits.add(c.sha));
-
-    if (newCommits.length > 0 && _seenCommits.size > newCommits.length) {
-      // Only emit after the first full seed tick so we don't flood on startup
+    if (newCommits.length > 0) {
       _emitter.emit('commits', { repo, commits: newCommits });
       logger.info(`[poller] ${newCommits.length} new commit(s) on ${repo}`);
     }
@@ -163,9 +161,8 @@ async function _pollIssues(repo, pat) {
     const data = await _githubGet(`/repos/${repo}/issues?state=open&per_page=20`, pat);
     if (!data) return;
 
-    const newIssues = data
-      .filter(i => !i.pull_request)             // skip PRs that appear in issues
-      .filter(i => !_seenIssues.has(i.number))
+    const issues = data.filter(i => !i.pull_request);
+    const newIssues = _issueTracker.newItems(issues, issue => issue.number)
       .map(i => ({
         number: i.number,
         title:  i.title,
@@ -174,11 +171,7 @@ async function _pollIssues(repo, pat) {
         labels: (i.labels ?? []).map(l => l.name)
       }));
 
-    data
-      .filter(i => !i.pull_request)
-      .forEach(i => _seenIssues.add(i.number));
-
-    if (newIssues.length > 0 && _seenIssues.size > newIssues.length) {
+    if (newIssues.length > 0) {
       _emitter.emit('issues', { repo, issues: newIssues });
       logger.info(`[poller] ${newIssues.length} new issue(s) on ${repo}`);
     }
@@ -206,7 +199,14 @@ function startPolling(opts = {}) {
   const mode     = process.env.GITHUB_MODE || 'polling';
   const repo     = opts.repo     || process.env.GITHUB_REPO || '';
   const pat      = opts.pat      || (mode === 'polling_pat' ? process.env.GITHUB_PAT : null) || null;
-  const interval = opts.interval || Number(process.env.GITHUB_POLL_INTERVAL || 60_000);
+  const requestedInterval = opts.interval ?? Number(process.env.GITHUB_POLL_INTERVAL || DEFAULT_PUBLIC_INTERVAL);
+
+  if (_timer) {
+    clearInterval(_timer);
+    _timer = null;
+  }
+  _commitTracker.reset();
+  _issueTracker.reset();
 
   if (!repo) {
     logger.warn('[poller] GITHUB_REPO not set — polling disabled.');
@@ -217,6 +217,11 @@ function startPolling(opts = {}) {
     logger.warn('[poller] GITHUB_MODE=polling_pat but GITHUB_PAT is not set — falling back to unauthenticated polling.');
   }
 
+  const interval = getPollInterval(requestedInterval, Boolean(pat));
+  if (Number(requestedInterval) !== interval) {
+    logger.warn(`[poller] Poll interval adjusted to ${interval}ms to stay within the configured GitHub API rate limit.`);
+  }
+
   logger.info(`[poller] Starting GitHub polling`, {
     repo, mode,
     interval: `${interval / 1000}s`,
@@ -224,9 +229,16 @@ function startPolling(opts = {}) {
   });
 
   // Seed the seen-sets on first tick without emitting, then emit on changes
+  let tickRunning = false;
   const tick = async () => {
-    await _pollCommits(repo, pat);
-    await _pollIssues(repo, pat);
+    if (tickRunning) return;
+    tickRunning = true;
+    try {
+      await _pollCommits(repo, pat);
+      await _pollIssues(repo, pat);
+    } finally {
+      tickRunning = false;
+    }
   };
 
   tick(); // immediate first tick (seeds the seen-sets)

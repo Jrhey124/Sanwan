@@ -131,6 +131,13 @@ class Logger {
    * Read log file
    */
   readLog(filename, lines = 50) {
+    if (typeof filename !== 'string' || path.basename(filename) !== filename || !/^[a-z0-9_-]+\.log$/i.test(filename)) {
+      return null;
+    }
+    if (!Number.isInteger(lines) || lines < 1 || lines > 1000) {
+      return null;
+    }
+
     const filepath = path.join(this.logDir, filename);
     
     if (!fs.existsSync(filepath)) {
@@ -176,3 +183,4 @@ class Logger {
 const logger = new Logger();
 
 module.exports = logger;
+module.exports.Logger = Logger;

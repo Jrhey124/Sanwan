@@ -73,8 +73,6 @@ requirements:
         must be allowed to be stored as scedule/daemon service
 
     .env -- where the credentials are stored
-        SETTINGS_KEY
-        SETTINGS_PATH
         DISCORD_TOKEN
         CLIENT_ID
         GUILD_ID

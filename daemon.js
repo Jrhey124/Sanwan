@@ -10,6 +10,9 @@ const { CronJob } = require('cron');
 const { Client, GatewayIntentBits } = require('discord.js');
 const storage = require('./utils/storage');
 const logger = require('./utils/logger');
+const { isDueWithinDays } = require('./utils/task-dates');
+const registry = require('./utils/registry');
+const { runScheduledShortcut } = require('./utils/shell-command');
 
 require('dotenv').config();
 
@@ -18,6 +21,8 @@ class SanwanDaemon {
     this.jobs = new Map();
     this.client = null;
     this.configPath = 'data/daemon-config.json';
+    this.config = null;
+    this.remindedTasks = new Set();
   }
 
   /**
@@ -47,6 +52,15 @@ class SanwanDaemon {
       return null;
     }
 
+    const timezone = config.timezone || 'UTC';
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+      config.timezone = timezone;
+    } catch {
+      logger.warn(`Invalid daemon timezone "${timezone}"; using UTC.`);
+      config.timezone = 'UTC';
+    }
+
     return config;
   }
 
@@ -61,7 +75,7 @@ class SanwanDaemon {
     });
 
     const data = storage.read('schedules/schedules.json', { schedules: [] });
-    return data.schedules.filter(schedule => schedule.enabled);
+    return Array.isArray(data.schedules) ? data.schedules.filter(schedule => schedule.enabled) : [];
   }
 
   /**
@@ -74,7 +88,7 @@ class SanwanDaemon {
         async () => await this.executeSchedule(schedule),
         null,
         false,
-        'America/New_York' // Adjust timezone as needed
+        this.config?.timezone || 'UTC'
       );
 
       this.jobs.set(schedule.sid, job);
@@ -125,19 +139,11 @@ class SanwanDaemon {
     }
   }
 
-  /**
-   * Execute a command (placeholder for actual implementation)
-   */
+  /** Execute a registered shell shortcut. */
   async executeCommand(command) {
-    // In a real implementation, this would:
-    // 1. Parse the command
-    // 2. Execute the appropriate bot command or system command
-    // 3. Return the result
-    
-    logger.daemon(`Executing command: ${command}`);
-    
-    // Placeholder implementation
-    return { status: 'success', message: `Executed: ${command}` };
+    const output = await runScheduledShortcut(command, registry.listAllowedCommands());
+    logger.daemon('Executed registered scheduled shortcut');
+    return output;
   }
 
   /**
@@ -165,7 +171,7 @@ class SanwanDaemon {
       data.history = data.history.slice(-100);
     }
 
-    storage.write('schedules/schedules.json', data);
+    return storage.write('schedules/schedules.json', data);
   }
 
   /**
@@ -215,18 +221,15 @@ class SanwanDaemon {
   async checkTaskReminders() {
     const tasks = storage.list('tasks/tasks.json', 'tasks');
     const now = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const upcomingTasks = tasks.filter(task => {
-      if (!task.deadline || task.status === 'completed') return false;
-      
-      const deadline = new Date(task.deadline);
-      return deadline > now && deadline <= tomorrow;
-    });
+    const upcomingTasks = tasks.filter(task =>
+      task.status !== 'completed' && isDueWithinDays(task.deadline, 1, now)
+    );
 
     for (const task of upcomingTasks) {
-      await this.sendTaskReminder(task);
+      const reminderKey = `${task.tid}:${task.deadline}`;
+      if (this.remindedTasks.has(reminderKey)) continue;
+      if (await this.sendTaskReminder(task)) this.remindedTasks.add(reminderKey);
     }
   }
 
@@ -234,14 +237,25 @@ class SanwanDaemon {
    * Send task reminder
    */
   async sendTaskReminder(task) {
-    const settings = storage.read('settings.json', { bot: {} });
-    const channelId = settings.bot.errorChannel; // Reuse error channel for now
+    const settingsPath = (process.env.SETTINGS_PATH || './data/settings.enc')
+      .replace(/^\.\/data\//, '')
+      .replace(/^data\//, '')
+      .replace(/^\.\//, '');
+    let settings = { bot: {} };
+    if (process.env.SETTINGS_KEY) {
+      try {
+        settings = storage.encryptedRead(settingsPath, settings) || settings;
+      } catch (error) {
+        logger.warn('Could not load encrypted settings for task reminder', { error: error.message });
+      }
+    }
+    const channelId = settings.bot?.errorChannel;
 
-    if (!channelId || !this.client) return;
+    if (!channelId || !this.client) return false;
 
     try {
       const channel = await this.client.channels.fetch(channelId);
-      if (!channel) return;
+      if (!channel) return false;
 
       const embed = {
         color: 0xffaa00,
@@ -257,11 +271,13 @@ class SanwanDaemon {
 
       await channel.send({ embeds: [embed] });
       logger.daemon('Sent task reminder', { tid: task.tid });
+      return true;
     } catch (error) {
       logger.error('Failed to send task reminder', {
         tid: task.tid,
         error: error.message
       });
+      return false;
     }
   }
 
@@ -279,6 +295,7 @@ class SanwanDaemon {
       console.log('⚠️  Daemon is disabled. Enable it in daemon-config.json');
       return;
     }
+    this.config = config;
 
     // Initialize Discord client
     await this.initializeClient();
@@ -296,11 +313,22 @@ class SanwanDaemon {
     }
 
     // Start task reminder check (every hour)
-    const reminderJob = new CronJob('0 * * * *', async () => {
-      await this.checkTaskReminders();
-    });
-    reminderJob.start();
-    console.log('✓ Task reminder checker started');
+    if (config.reminders?.tasks !== false) {
+      try {
+        const reminderJob = new CronJob(
+          config.reminders?.checkInterval || '0 * * * *',
+          async () => this.checkTaskReminders(),
+          null,
+          false,
+          config.timezone || 'UTC'
+        );
+        reminderJob.start();
+        this.jobs.set('__task_reminders__', reminderJob);
+        console.log('✓ Task reminder checker started');
+      } catch (error) {
+        logger.error('Could not start task reminder checker', { error: error.message });
+      }
+    }
 
     logger.daemon('Daemon started successfully', {
       schedules: schedules.length
@@ -330,21 +358,20 @@ class SanwanDaemon {
   }
 }
 
-// Handle shutdown signals
-const daemon = new SanwanDaemon();
-
-process.on('SIGINT', () => {
-  daemon.stop();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  daemon.stop();
-  process.exit(0);
-});
-
 // Start daemon if run directly
 if (require.main === module) {
+  const daemon = new SanwanDaemon();
+
+  process.on('SIGINT', () => {
+    daemon.stop();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    daemon.stop();
+    process.exit(0);
+  });
+
   daemon.start().catch(error => {
     console.error('❌ Daemon failed to start:', error);
     logger.error('Daemon startup failed', { error: error.message });
