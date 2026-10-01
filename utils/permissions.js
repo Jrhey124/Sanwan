@@ -64,7 +64,7 @@ const storage = require('./storage');
 //   data/settings.enc    →  settings.enc
 //   ./settings.enc       →  settings.enc
 const SETTINGS_FILE = () => {
-  const raw = process.env.SETTINGS_PATH || './data/settings.enc';
+  const raw = 'settings.enc';
   return raw
     .replace(/^\.\/data\//, '')
     .replace(/^data\//, '')

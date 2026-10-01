@@ -164,6 +164,17 @@ async function enqueue(interaction, commandFn) {
   const bucket  = _bucket(userId);
   const queued  = bucket.running; // true = another job is already in progress
 
+  // A queued interaction must be acknowledged immediately. Once acknowledged,
+  // command handlers must edit that response instead of calling reply again.
+  // Preserve Discord.js' method binding while transparently handling both paths.
+  const originalReply = interaction.reply.bind(interaction);
+  if (queued) {
+    interaction.reply = async payload => {
+      if (interaction.replied || interaction.deferred) return interaction.editReply(payload);
+      return originalReply(payload);
+    };
+  }
+
   logger.info(`queue: ✅ /${commandName} enqueued`, {
     user:    userTag,
     queued:  queued,
@@ -172,7 +183,7 @@ async function enqueue(interaction, commandFn) {
 
   // If a job is already running for this user, acknowledge the queue position
   if (queued) {
-    void interaction.reply({
+    void originalReply({
       content: `⏳ \`/${commandName}\` is queued (position ${bucket.jobs.length + 1}) — it will run shortly.`,
       ephemeral: true
     }).catch(() => {});

@@ -103,10 +103,7 @@ client.once('ready', async () => {
 
   // ── Normalise settings file path ─────────────────────────────────────────
   // storage resolves against ./data/ already, so strip that prefix if present.
-  const settingsFile = (process.env.SETTINGS_PATH || './data/settings.enc')
-    .replace(/^\.\/data\//, '')
-    .replace(/^data\//, '')
-    .replace(/^\.\//, '');
+  const settingsFile = 'settings.enc';
 
   // ── Wire logger → Discord error channel ──────────────────────────────────
   let errorChannelId = null;
@@ -258,6 +255,10 @@ async function _notify(channelId, message) {
 // ─── 7. Login ─────────────────────────────────────────────────────────────────
 
 client.login(process.env.DISCORD_TOKEN).catch(err => {
-  logger.error('Discord login failed', { error: err.message });
+  logger.error('Discord login failed', {
+    error: err.message || '(no message)',
+    code: err.code || null,
+    name: err.name || null
+  });
   process.exit(1);
 });

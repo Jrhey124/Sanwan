@@ -107,10 +107,10 @@ function writeEnvFile(vars) {
 }
 
 /**
- * Resolve SETTINGS_PATH to the key that storage.encryptedRead / encryptedWrite
+ * Resolve a legacy settings path to the key that storage.encryptedRead / encryptedWrite
  * expects — i.e. the path RELATIVE TO storage's data/ directory.
  *
- * SETTINGS_PATH in .env is typically "./data/settings.enc".
+ * Legacy installations may have used "./data/settings.enc".
  * storage resolves filenames against its own dataDir (./data/), so the correct
  * key is just "settings.enc" — not "data/settings.enc".
  *
