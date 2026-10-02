@@ -208,7 +208,13 @@ if (require.main === module) {
       if      (err.code === 50001)               console.error('     Missing access — bot may not be in this guild.');
       else if (err.code === 'ERR_REQUEST_FAILED') console.error('     Network error — check your connection.');
       else if (err.rawError)                     console.error('     Discord API:', err.rawError.message);
-      else                                       console.error('    ', err.message);
+      else console.error('     Discord error:', {
+        message: err.message || '(no message)',
+        code: err.code || null,
+        status: err.status || err.statusCode || null,
+        name: err.name || null,
+        raw: err.rawError || null
+      });
       process.exit(1);
     });
 }

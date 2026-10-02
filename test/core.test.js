@@ -568,20 +568,20 @@ test('task command creates, validates, updates, and filters task records', async
     const storage = require('../utils/storage');
     let tasks = storage.list('tasks/tasks.json', 'tasks');
     assert.equal(tasks.length, 1);
-    assert.equal(tasks[0].tid, 'T001');
+    assert.equal(tasks[0].tid, 'T0');
     assert.equal(tasks[0].status, 'open');
 
     await invoke('add', { title: 'Invalid', deadline: '2026-02-30' });
     assert.match(replies.at(-1).content, /real calendar date/);
     assert.equal(storage.list('tasks/tasks.json', 'tasks').length, 1);
 
-    await invoke('update', { tid: 'T001', field: 'status', value: 'completed' });
+    await invoke('update', { tid: 't0', field: 'status', value: 'completed' });
     tasks = storage.list('tasks/tasks.json', 'tasks');
     assert.equal(tasks[0].status, 'completed');
 
     await invoke('due', { days: 2 });
     assert.match(replies.at(-1).content, /No tasks due/);
-    await invoke('remove', { tid: 'T001' });
+    await invoke('remove', { tid: 'T0' });
     assert.equal(storage.list('tasks/tasks.json', 'tasks').length, 0);
   } finally {
     Module._load = originalLoad;
@@ -754,23 +754,27 @@ test('per-user queue keeps FIFO order and continues after a command failure', as
       user: { id, tag: `user-${id}` },
       member: { roles: { cache: new Map() } },
       replies: [],
-      reply: async function (message) { this.replies.push(message); }
+      replied: false,
+      reply: async function (message) { this.replied = true; this.replies.push(message); },
+      editReply: async function (message) { this.replies.push({ ...message, edited: true }); }
     });
     const first = makeInteraction('u1', 'task');
     const second = makeInteraction('u1', 'note');
     await queue.enqueue(first, async () => { executed.push('first-start'); await firstGate; executed.push('first-end'); });
-    await queue.enqueue(second, async () => { executed.push('second'); });
+    await queue.enqueue(second, async interaction => { executed.push('second'); await interaction.reply({ content: 'final response' }); });
     assert.match(second.replies[0].content, /is queued/);
     assert.deepEqual(executed, ['first-start']);
     releaseFirst();
     for (let i = 0; i < 50 && queue.stats().running; i++) await new Promise(resolve => setTimeout(resolve, 2));
     assert.deepEqual(executed, ['first-start', 'first-end', 'second']);
+    assert.equal(second.replies.filter(reply => reply.edited).length, 1);
+    assert.equal(second.replies.filter(reply => /already acknowledged|Unknown interaction/.test(reply.content || '')).length, 0);
     assert.deepEqual(queue.stats(), { queued: 0, running: 0, users: [] });
 
     const failed = makeInteraction('u2', 'task');
     const next = makeInteraction('u2', 'note');
     await queue.enqueue(failed, async () => { throw new Error('expected test failure'); });
-    await queue.enqueue(next, async () => { executed.push('after-failure'); });
+    await queue.enqueue(next, async interaction => { executed.push('after-failure'); await interaction.reply({ content: 'after failure' }); });
     for (let i = 0; i < 50 && queue.stats().running; i++) await new Promise(resolve => setTimeout(resolve, 2));
     assert.ok(failed.replies.some(reply => /Something went wrong/.test(reply.content)));
     assert.equal(executed.at(-1), 'after-failure');
