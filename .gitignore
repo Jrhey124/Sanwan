@@ -58,3 +58,4 @@ scripts/
 dist/
 build/
 coverage/
+data/*.sqlite
